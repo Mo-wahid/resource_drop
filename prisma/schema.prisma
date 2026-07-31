@@ -1,0 +1,317 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum AccountStatus {
+    INVITED
+    ACTIVE
+    SUSPENDED
+}
+
+enum DeliveryType {
+    EMAIL
+    IN_APP
+    BOTH
+}
+
+enum DeliveryStatus {
+    PENDING
+    SENT
+    FAILED
+}
+
+enum RequestStatus {
+    PENDING
+    ACCEPTED
+    PROVISIONED
+    REJECTED
+    REVOKED
+}
+
+enum InvitationStatus {
+    PENDING
+    USED
+    EXPIRED
+    REVOKED
+}
+
+// -----------------------------------------------------------------------------
+// MODELS
+// -----------------------------------------------------------------------------
+
+model User {
+    id            String        @id @default(uuid()) @db.Uuid
+    username      String
+    email         String        @unique
+    passwordHash  String?
+    roleId        String        @db.Uuid
+    createdAt     DateTime      @default(now())
+    accountStatus AccountStatus @default(INVITED)
+    deletedAt     DateTime?
+
+    // Relations
+    role                Role                   @relation(fields: [roleId], references: [id])
+    projectsCreated     Project[]              @relation("ProjectCreator")
+    projectMemberships  ProjectMember[]        @relation("ProjectMemberUser")
+    uploadedDocuments   ProjectDocument[]      @relation("DocumentUploader")
+    uploadedAttachments ResourceAttachment[]   @relation("AttachmentUploader")
+    resourceRequests    ResourceRequest[]      @relation("RequestUser")
+    statusChanges       RequestStatusHistory[] @relation("HistoryChanger")
+    auditActions        AuditLog[]             @relation("AuditActor")
+    notifications       Notification[]         @relation("NotificationUser")
+    comments            RequestComment[]       @relation("CommentAuthor")
+    invitationsSent     Invitation[]           @relation("InvitationSender")
+
+    @@map("users")
+}
+
+model Role {
+    id           String   @id @default(uuid()) @db.Uuid
+    name         String   @unique
+    description  String?
+    isSystemRole Boolean  @default(false)
+    createdAt    DateTime @default(now())
+
+    // Relations
+    users          User[]
+    projectMembers ProjectMember[]
+    invitations    Invitation[]
+
+    @@map("roles")
+}
+
+model Invitation {
+    id        String           @id @default(uuid()) @db.Uuid
+    email     String
+    token     String           @unique
+    roleId    String           @db.Uuid
+    invitedBy String           @db.Uuid
+    status    InvitationStatus @default(PENDING)
+    expiresAt DateTime
+    usedAt    DateTime?
+    createdAt DateTime         @default(now())
+
+    // Relations
+    role      Role     @relation(fields: [roleId], references: [id])
+    inviter   User     @relation("InvitationSender", fields: [invitedBy], references: [id])
+    project   Project? @relation(fields: [projectId], references: [id])
+    projectId String?  @db.Uuid
+
+    @@index([email])
+    @@index([token])
+    @@map("invitations")
+}
+
+model Project {
+    id          String    @id @default(uuid()) @db.Uuid
+    name        String    @unique
+    description String?
+    createdBy   String    @db.Uuid
+    createdAt   DateTime  @default(now())
+    deletedAt   DateTime?
+
+    // Relations
+    creator              User                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+    documents            ProjectDocument[]
+    members              ProjectMember[]
+    provisionedResources ProvisionedResource[]
+    requests             ResourceRequest[]
+    invitations          Invitation[]
+
+    @@map("projects")
+}
+
+// Project Documents
+model ProjectDocument {
+    id         String   @id @default(uuid()) @db.Uuid
+    projectId  String   @db.Uuid
+    uploadedBy String   @db.Uuid
+    fileName   String
+    fileUrl    String
+    uploadedAt DateTime @default(now())
+
+    // Relations
+    project  Project @relation(fields: [projectId], references: [id])
+    uploader User    @relation("DocumentUploader", fields: [uploadedBy], references: [id])
+
+    @@map("project_documents")
+}
+
+model ProjectMember {
+    projectId     String   @db.Uuid
+    userId        String   @db.Uuid
+    projectRoleId String   @db.Uuid
+    assignedAt    DateTime @default(now())
+
+    // Relations
+    project Project @relation(fields: [projectId], references: [id])
+    user    User    @relation("ProjectMemberUser", fields: [userId], references: [id])
+    role    Role    @relation(fields: [projectRoleId], references: [id])
+
+    @@id([projectId, userId])
+    @@map("project_members")
+}
+
+model ResourceCategory {
+    id          String   @id @default(uuid()) @db.Uuid
+    name        String   @unique
+    description String?
+    createdAt   DateTime @default(now())
+
+    // Relations
+    resourceTypes ResourceType[]
+
+    @@map("resource_categories")
+}
+
+model ResourceType {
+    id               String   @id @default(uuid()) @db.Uuid
+    categoryId       String   @db.Uuid
+    name             String   @unique
+    isCustom         Boolean  @default(false)
+    createdAt        DateTime @default(now())
+    schemaDefinition Json?
+
+    // Relations
+    category             ResourceCategory      @relation(fields: [categoryId], references: [id])
+    provisionedResources ProvisionedResource[]
+    requests             ResourceRequest[]
+
+    @@index([categoryId])
+    @@map("resource_types")
+}
+
+model ProvisionedResource {
+    id                String    @id @default(uuid()) @db.Uuid
+    projectId         String    @db.Uuid
+    resourceTypeId    String    @db.Uuid
+    vaultReference    String?
+    connectionDetails Json?
+    createdAt         DateTime  @default(now())
+    deletedAt         DateTime?
+
+    // Relations
+    project      Project              @relation(fields: [projectId], references: [id])
+    resourceType ResourceType         @relation(fields: [resourceTypeId], references: [id])
+    attachments  ResourceAttachment[]
+
+    @@index([projectId])
+    @@index([resourceTypeId])
+    @@map("provisioned_resources")
+}
+
+model ResourceAttachment {
+    id         String   @id @default(uuid()) @db.Uuid
+    resourceId String   @db.Uuid
+    fileName   String
+    fileUrl    String
+    uploadedBy String   @db.Uuid
+    uploadedAt DateTime @default(now())
+
+    // Relations
+    resource ProvisionedResource @relation(fields: [resourceId], references: [id])
+    uploader User                @relation("AttachmentUploader", fields: [uploadedBy], references: [id])
+
+    @@map("resource_attachments")
+}
+
+model ResourceRequest {
+    id             String        @id @default(uuid()) @db.Uuid
+    projectId      String        @db.Uuid
+    userId         String        @db.Uuid
+    resourceTypeId String        @db.Uuid
+    status         RequestStatus @default(PENDING)
+    parameters     Json?
+    createdAt      DateTime      @default(now())
+    updatedAt      DateTime      @updatedAt
+    deletedAt      DateTime?
+
+    // Relations
+    project      Project                @relation(fields: [projectId], references: [id])
+    user         User                   @relation("RequestUser", fields: [userId], references: [id])
+    resourceType ResourceType           @relation(fields: [resourceTypeId], references: [id])
+    history      RequestStatusHistory[]
+    comments     RequestComment[]
+    notifications Notification[]
+
+    @@index([projectId])
+    @@index([userId])
+    @@index([status])
+    @@map("resource_requests")
+}
+
+model RequestStatusHistory {
+    id             String         @id @default(uuid()) @db.Uuid
+    requestId      String         @db.Uuid
+    changedBy      String         @db.Uuid
+    previousStatus RequestStatus?
+    newStatus      RequestStatus
+    notes          String?
+    changedAt      DateTime       @default(now())
+
+    // Relations
+    request ResourceRequest @relation(fields: [requestId], references: [id])
+    changer User            @relation("HistoryChanger", fields: [changedBy], references: [id])
+
+    @@index([requestId])
+    @@map("request_status_history")
+}
+
+model AuditLog {
+    id        String   @id @default(uuid()) @db.Uuid
+    action    String
+    actorId   String   @db.Uuid
+    targetId  String   @db.Uuid
+    details   Json?
+    createdAt DateTime @default(now())
+
+    // Relations
+    actor User @relation("AuditActor", fields: [actorId], references: [id])
+
+    @@index([actorId])
+    @@index([targetId])
+    @@index([createdAt(sort: Desc)])
+    @@map("audit_logs")
+}
+
+model Notification {
+    id             String         @id @default(uuid()) @db.Uuid
+    userId         String         @db.Uuid
+    requestId      String?        @db.Uuid
+    message        String
+    isRead         Boolean        @default(false)
+    createdAt      DateTime       @default(now())
+    deliveryType   DeliveryType   @default(IN_APP)
+    deliveryStatus DeliveryStatus @default(PENDING)
+
+    // Relations
+    user    User             @relation("NotificationUser", fields: [userId], references: [id])
+    request ResourceRequest? @relation(fields: [requestId], references: [id])
+
+    @@index([userId])
+    @@index([isRead])
+    @@map("notifications")
+}
+
+model RequestComment {
+    id        String   @id @default(uuid()) @db.Uuid
+    requestId String   @db.Uuid
+    authorId  String   @db.Uuid
+    message   String
+    createdAt DateTime @default(now())
+
+    // Relations
+    request ResourceRequest @relation(fields: [requestId], references: [id])
+    author  User            @relation("CommentAuthor", fields: [authorId], references: [id])
+
+    @@map("request_comments")
+}
