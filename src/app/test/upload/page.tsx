@@ -63,7 +63,7 @@ export default function UploadTestPage() {
   };
 
   return (
-    <div style={{ padding: "40px", fontFamily: "sans-serif" }}>
+    <div style={{ padding: "40px", fontFamily: "sans-serif", color: "black", backgroundColor: "white", minHeight: "100vh" }}>
       <h1>MinIO Presigned URL Upload Test</h1>
       
       <div style={{ margin: "20px 0" }}>
