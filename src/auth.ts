@@ -88,7 +88,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
   },
   pages: {
-    // If we want a custom login page later, we'd specify it here:
-    // signIn: '/login',
+    signIn: "/login",
   },
 });
