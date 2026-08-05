@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { generatePresignedUploadUrl } from "@/lib/s3";
+import { requireAuth } from "@/lib/auth/guard";
 
 export async function POST(request: Request) {
   try {
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) return authResult;
+
     const { filename, contentType } = await request.json();
 
     if (!filename || !contentType) {

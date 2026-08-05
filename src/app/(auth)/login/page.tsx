@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "motion/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, LogIn, Loader2, AlertCircle } from "lucide-react";
 
 import { loginSchema, LoginInput } from "@/lib/validation/auth";
@@ -15,10 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ResourceDropLogo } from "@/components/icons/resource-drop-logo";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const {
     register,
@@ -40,7 +43,7 @@ export default function LoginPage() {
     if (result.error) {
       setServerError(result.error);
     } else if (result.success) {
-      router.push("/test/auth");
+      router.push(callbackUrl);
       router.refresh();
     }
   };
@@ -157,5 +160,17 @@ export default function LoginPage() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin size-8 text-muted-foreground" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
