@@ -139,3 +139,23 @@
     @apply font-sans overflow-x-hidden;
   }
 }
+
+/* Ultra-wide and 4K/8K monitor scaling */
+/* By increasing the root font-size, all Tailwind 'rem' classes (p-4, text-sm, w-64, etc) naturally scale up */
+@media (min-width: 2560px) {
+  html {
+    font-size: 18px;
+  }
+}
+@media (min-width: 3840px) {
+  html {
+    /* 4K screens */
+    font-size: 24px; 
+  }
+}
+@media (min-width: 7680px) {
+  html {
+    /* 8K screens */
+    font-size: 48px; 
+  }
+}

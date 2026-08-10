@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ResourceDropLogo } from "@/components/icons/resource-drop-logo";
+import { siteConfig } from "@/config/site";
 
 function LoginContent() {
   const router = useRouter();
@@ -59,10 +60,10 @@ function LoginContent() {
       >
         <ResourceDropLogo className="w-15 h-15 mb-4" />
         <h1 className="text-3xl text-white tracking-tight">
-          <span className="font-light">Resource</span><span className="font-bold">Drop</span>
+          <span className="font-light capitalize">{siteConfig.nameTop.toLowerCase()}</span><span className="font-bold capitalize">{siteConfig.nameBottom.toLowerCase()}</span>
         </h1>
         <p className="text-sm text-slate-400 mt-1.5">
-          Resource Provisioning Portal
+          {siteConfig.tagline}
         </p>
       </motion.div>
 

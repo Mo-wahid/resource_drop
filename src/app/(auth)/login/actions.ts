@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { signIn } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { loginSchema, LoginInput } from "@/lib/validation/auth";
 import { AuthError } from "next-auth";
 
@@ -38,4 +38,8 @@ export async function loginAction(data: LoginInput) {
     // Generic error fallback to prevent account enumeration
     return { error: "Invalid email or password" };
   }
+}
+
+export async function signOutAction() {
+  await signOut({ redirectTo: "/login" });
 }

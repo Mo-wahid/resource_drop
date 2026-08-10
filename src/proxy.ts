@@ -8,7 +8,7 @@ export default auth((req) => {
 
   // Unauthenticated users trying to access protected routes
   if (!session) {
-    if (pathname !== "/login") {
+    if (pathname !== "/login" && pathname !== "/register") {
       if (isApiRoute) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }

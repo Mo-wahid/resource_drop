@@ -1,4 +1,5 @@
 import React from "react";
+import { siteConfig } from "@/config/site";
 
 export default function AuthLayout({
   children,
@@ -11,7 +12,7 @@ export default function AuthLayout({
         {children}
       </main>
       <footer className="relative z-10 mt-8 text-center text-xs text-slate-500 tracking-wide">
-        © 2026 resource-drop - Musketeer Developers
+        © 2026 {siteConfig.nameFull.toLowerCase()} - Musketeer Developers
       </footer>
     </div>
   );
