@@ -74,7 +74,7 @@ function LoginContent() {
         transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
         className="w-full"
       >
-        <Card className="rounded-2xl shadow-lg">
+        <Card className="rounded-card shadow-lg">
           <CardContent className="p-8 pt-8">
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
               {/* Server Error */}
@@ -103,7 +103,7 @@ function LoginContent() {
                     placeholder="admin@resourcedrop.local"
                     autoComplete="email"
                     disabled={isSubmitting}
-                    className="h-11 pl-10 rounded-xl bg-muted/50"
+                    className="h-11 pl-10 rounded-input bg-muted/50"
                     aria-invalid={!!errors.email}
                     {...register("email")}
                   />
@@ -124,7 +124,7 @@ function LoginContent() {
                     placeholder="••••••••"
                     autoComplete="current-password"
                     disabled={isSubmitting}
-                    className="h-11 pl-10 pr-10 rounded-xl bg-muted/50"
+                    className="h-11 pl-10 pr-10 rounded-input bg-muted/50"
                     aria-invalid={!!errors.password}
                     {...register("password")}
                   />
@@ -143,7 +143,7 @@ function LoginContent() {
               </div>
 
               {/* Submit Button */}
-              <Button type="submit" disabled={isSubmitting} className="w-full h-11 rounded-xl mt-1 text-sm font-medium">
+              <Button type="submit" disabled={isSubmitting} className="w-full h-11 rounded-input mt-1 text-sm font-medium">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin" />

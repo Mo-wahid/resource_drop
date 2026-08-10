@@ -51,6 +51,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null; // User not found or no password (e.g., OAuth-only user in the future)
         }
 
+        // Block soft-deleted or suspended accounts
+        if (user.deletedAt || user.accountStatus === "SUSPENDED") {
+          return null;
+        }
+
         const isValid = await argon2.verify(user.passwordHash, password);
 
         if (!isValid) {

@@ -1,13 +1,15 @@
 import { getActiveUsers, getPendingInvitations } from "./queries";
-import { UsersTable } from "./_components/users-table";
-import { InvitationsTable } from "./_components/invitations-table";
-import { Button, buttonVariants } from "@/components/ui/button";
-import Link from "next/link";
-import { UserPlus } from "lucide-react";
+import { UsersTable } from "@/components/admin/users/users-table";
+import { InvitationsTable } from "@/components/admin/users/invitations-table";
+import { InviteUserModal } from "@/components/admin/users/invite-user-modal";
 import { requireRoleAction } from "@/lib/auth/guard";
 
 export default async function AdminUsersPage() {
-  await requireRoleAction("ADMIN"); // Just to be absolutely safe
+  const authResult = await requireRoleAction("ADMIN"); // Just to be absolutely safe
+  
+  if ("error" in authResult || !authResult.session) {
+    return <div>Unauthorized</div>;
+  }
 
   const [activeUsers, pendingInvitations] = await Promise.all([
     getActiveUsers(),
@@ -21,10 +23,7 @@ export default async function AdminUsersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Users & Roles</h1>
           <p className="text-muted-foreground mt-1">Manage team members and invitations.</p>
         </div>
-        <Link href="/admin/users/invite" className={buttonVariants()}>
-          <UserPlus className="size-4 mr-2" />
-          Invite User
-        </Link>
+        <InviteUserModal />
       </div>
 
       <div className="flex flex-col gap-4">
@@ -34,7 +33,7 @@ export default async function AdminUsersPage() {
 
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold tracking-tight">Active Users</h2>
-        <UsersTable users={activeUsers} />
+        <UsersTable users={activeUsers} currentUserId={authResult.session.user.id} />
       </div>
     </div>
   );
