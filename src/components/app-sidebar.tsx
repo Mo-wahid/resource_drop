@@ -40,7 +40,7 @@ interface AppSidebarProps {
 export function AppSidebar({ session }: AppSidebarProps) {
   const pathname = usePathname();
   const role = session?.user?.role;
-  const userInitial = session?.user?.email?.charAt(0).toUpperCase() || "U";
+  const userInitial = session?.user?.name?.charAt(0).toUpperCase() || session?.user?.email?.charAt(0).toUpperCase() || "U";
 
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [activeUrl, setActiveUrl] = useState(pathname);
@@ -72,8 +72,8 @@ export function AppSidebar({ session }: AppSidebarProps) {
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <ResourceDropLogo className="w-12 h-12 text-primary shrink-0" />
             <div className="flex flex-col leading-tight">
-              <span className="font-bold text-[1.1rem] tracking-tight">{siteConfig.nameTop}</span>
-              <span className="font-bold text-[1.1rem] tracking-tight">{siteConfig.nameBottom}</span>
+              <span className="font-bold text-brand tracking-tight">{siteConfig.nameTop}</span>
+              <span className="font-bold text-brand tracking-tight">{siteConfig.nameBottom}</span>
             </div>
           </Link>
           <span className="text-sm text-muted-foreground px-1">{siteConfig.tagline}</span>
@@ -112,7 +112,7 @@ export function AppSidebar({ session }: AppSidebarProps) {
                       )}
                     >
                       <item.icon className="ml-1 relative z-10" />
-                      <span className="text-[15px] relative z-10">{item.title}</span>
+                      <span className="text-nav relative z-10">{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -122,36 +122,6 @@ export function AppSidebar({ session }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border gap-2 p-3">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors h-10"
-          disabled={isSigningOut}
-          onClick={async () => {
-            if (isSigningOut) return;
-            setIsSigningOut(true);
-            await signOutAction();
-          }}
-        >
-          {isSigningOut ? (
-            <div className="flex items-center justify-center w-4 h-4 mr-2">
-              <div className="w-4 h-4 border-2 border-destructive/30 border-t-destructive rounded-full animate-spin" />
-            </div>
-          ) : (
-            <LogOut className="mr-2 size-4" />
-          )}
-          <span className="font-medium text-[15px]">{isSigningOut ? "Signing out..." : "Sign out"}</span>
-        </Button>
-        <div className="flex items-center gap-3 px-2 py-1.5 mt-1">
-          <Avatar className="h-9 w-9 rounded-lg">
-            <AvatarFallback className="rounded-lg bg-primary/10 text-primary">{userInitial}</AvatarFallback>
-          </Avatar>
-          <div className="grid flex-1 text-left leading-tight">
-            <span className="truncate font-semibold text-sm">{session?.user?.email?.split('@')[0] || "User"}</span>
-            <span className="truncate text-xs text-muted-foreground uppercase font-medium mt-0.5">{role}</span>
-          </div>
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 }
