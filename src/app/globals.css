@@ -46,15 +46,42 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  
+  /* Semantic Tokens */
+  --text-tiny: 0.8rem;
+  --text-nav: 15px;
+  --text-brand: 1.1rem;
+  
+  --spacing-11: 2.75rem;
+  --spacing-15: 3.75rem;
+  
+  --radius-input: 0.75rem;
+  --radius-card: 1rem;
+  
+  --color-auth-bg-light: hsl(215, 55%, 18%);
+  --color-auth-bg-mid: hsl(220, 50%, 9%);
+  --color-auth-bg-dark: hsl(222, 55%, 5%);
+  
+  --color-brand-cyan-default: #0CCAFF;
+  --color-brand-cyan-hover: #35D4FF;
+  --color-brand-blue-default: hsl(222, 60%, 25%);
+  --color-brand-blue-hover: hsl(222, 65%, 50%);
+  
+  --color-landing-btn-hover-light: #383838;
+  --color-landing-btn-hover-dark: #ccc;
+  --color-landing-border-light: rgba(0, 0, 0, 0.08);
+  --color-landing-btn-bg-light: rgba(0, 0, 0, 0.04);
+  --color-landing-border-dark: rgba(255, 255, 255, 0.145);
+  --color-landing-btn-bg-dark: #1a1a1a;
 }
 
 /* Auth Page Top-Left Radial Glow Background */
 .auth-bg {
   background: radial-gradient(
     ellipse at 15% 15%,
-    hsl(215, 55%, 18%) 0%,
-    hsl(220, 50%, 9%) 50%,
-    hsl(222, 55%, 5%) 100%
+    var(--color-auth-bg-light) 0%,
+    var(--color-auth-bg-mid) 50%,
+    var(--color-auth-bg-dark) 100%
   );
   min-height: 100vh;
 }
@@ -86,8 +113,8 @@
   --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: var(--background);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
@@ -120,8 +147,8 @@
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: var(--background);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
