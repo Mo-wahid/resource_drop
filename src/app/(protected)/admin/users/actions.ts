@@ -29,14 +29,14 @@ export async function createInvitation(data: InviteFormInput) {
     };
   }
 
-  const { name, email, role } = parsed.data;
+  const { email, role } = parsed.data;
 
   // 3. Check if an active user already exists with this email
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
 
-  if (existingUser && existingUser.accountStatus !== "INVITED") {
+  if (existingUser && !existingUser.deletedAt && existingUser.accountStatus !== "INVITED") {
     return { error: "A user with this email already exists" };
   }
 
@@ -63,12 +63,13 @@ export async function createInvitation(data: InviteFormInput) {
 
     // Create or update the INVITED user
     if (existingUser) {
-      // Re-inviting an existing INVITED user — update their name/role
+      // Re-inviting an existing INVITED user or a soft-deleted user
       await tx.user.update({
         where: { id: existingUser.id },
         data: {
-          username: name,
           roleId: roleRecord.id,
+          accountStatus: "INVITED",
+          deletedAt: null,
         },
       });
     } else {
@@ -76,7 +77,7 @@ export async function createInvitation(data: InviteFormInput) {
       await tx.user.create({
         data: {
           email,
-          username: name,
+          username: email, // Placeholder until they register
           passwordHash: null,
           roleId: roleRecord.id,
           accountStatus: "INVITED",
@@ -99,7 +100,7 @@ export async function createInvitation(data: InviteFormInput) {
 
   // 7. Send the invitation email (outside transaction — email failure shouldn't roll back DB)
   const { subject, html } = buildInviteEmail({
-    name,
+    name: email.split("@")[0], // Fallback name
     rawToken: raw,
     roleName: role,
     expiresAt,
@@ -220,6 +221,43 @@ export async function resendInvitation(invitationId: string) {
   } catch (err) {
     console.error("Failed to send invitation email:", err);
   }
+
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
+/**
+ * Delete a user by setting their deletedAt timestamp (soft delete).
+ * Prevents an admin from deleting themselves.
+ */
+export async function deleteUser(userId: string) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  // Prevent self-deletion
+  if (authResult.session.user.id === userId) {
+    return { error: "You cannot delete your own account" };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    return { error: "User not found" };
+  }
+
+  if (user.deletedAt) {
+    return { error: "User is already deleted" };
+  }
+
+  // Soft delete the user
+  await prisma.user.update({
+    where: { id: userId },
+    data: { deletedAt: new Date(), accountStatus: "SUSPENDED" }, // Optionally set status
+  });
 
   revalidatePath("/admin/users");
   return { success: true };
