@@ -1,10 +1,21 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { revokeInvitation, resendInvitation } from "@/app/(protected)/admin/users/actions";
 import { toast } from "sonner";
-import { RotateCw, XCircle } from "lucide-react";
+import { RotateCw, XCircle, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface InvitationActionsProps {
   invitationId: string;
@@ -14,16 +25,19 @@ interface InvitationActionsProps {
 export function InvitationActions({ invitationId, isExpired }: InvitationActionsProps) {
   const [isRevoking, startRevoking] = useTransition();
   const [isResending, startResending] = useTransition();
+  const [isRevokeOpen, setIsRevokeOpen] = useState(false);
 
-  const onRevoke = () => {
-    if (!confirm("Are you sure you want to revoke this invitation? This action cannot be undone.")) return;
+  const onRevoke = (e: React.MouseEvent) => {
+    e.preventDefault();
     
     startRevoking(async () => {
       const res = await revokeInvitation(invitationId);
       if (res.error) {
         toast.error(res.error);
+        setIsRevokeOpen(false);
       } else {
         toast.success("Invitation revoked");
+        setIsRevokeOpen(false);
       }
     });
   };
@@ -51,15 +65,49 @@ export function InvitationActions({ invitationId, isExpired }: InvitationActions
         Resend
       </Button>
       {!isExpired && (
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={onRevoke}
-          disabled={isRevoking || isResending}
-        >
-          <XCircle className="size-4 mr-2" />
-          Revoke
-        </Button>
+        <AlertDialog open={isRevokeOpen} onOpenChange={setIsRevokeOpen}>
+          <AlertDialogTrigger
+            render={
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={isRevoking || isResending}
+              >
+                {isRevoking ? (
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                ) : (
+                  <XCircle className="size-4 mr-2" />
+                )}
+                Revoke
+              </Button>
+            }
+          />
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Revoke Invitation</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to revoke this invitation? This action cannot be undone and the invite link will immediately become invalid.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isRevoking}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isRevoking}
+                onClick={onRevoke}
+              >
+                {isRevoking ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Revoking...
+                  </>
+                ) : (
+                  "Revoke"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

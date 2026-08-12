@@ -63,9 +63,9 @@ export function InviteForm({ onSuccess }: { onSuccess?: () => void } = {}) {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-col gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" required>Email</Label>
           <Input id="email" type="email" placeholder="john@example.com" {...register("email")} />
           {errors.email && (
             <p className="text-tiny font-medium text-destructive">{errors.email.message}</p>
@@ -73,7 +73,7 @@ export function InviteForm({ onSuccess }: { onSuccess?: () => void } = {}) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="role">Role</Label>
+          <Label htmlFor="role" required>Role</Label>
           <Select onValueChange={(v) => { if (v) setValue("role", v as "ADMIN" | "TEAM_MEMBER") }} value={watch("role")}>
             <SelectTrigger>
               {watch("role") ? (

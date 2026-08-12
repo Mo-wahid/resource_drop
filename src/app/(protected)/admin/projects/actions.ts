@@ -1,0 +1,316 @@
+"use server";
+
+import { prisma } from "@/lib/db";
+import { requireRoleAction } from "@/lib/auth/guard";
+import { createProjectSchema, type CreateProjectInput } from "@/lib/validation/project";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { Prisma, Project } from "@prisma/client";
+import { deleteObject } from "@/lib/s3";
+
+type ProjectStatus = Project["status"];
+
+/**
+ * Create a new project.
+ * Enforces ADMIN role and catches Prisma P2002 unique constraint violations.
+ */
+export async function createProject(data: CreateProjectInput) {
+  // 1. Verify caller is an admin
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult || !authResult.session) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  // 2. Validate input
+  const parsed = createProjectSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      error: "Invalid input",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  const { id, name, description, memberIds, requirementsDocument } = parsed.data;
+
+  try {
+    // 3. Look up team member role if we have members to add
+    let teamMemberRoleId: string | undefined;
+    if (memberIds && memberIds.length > 0) {
+      const role = await prisma.role.findUnique({ where: { name: "TEAM_MEMBER" } });
+      if (!role) return { error: "Team member role not found" };
+      teamMemberRoleId = role.id;
+    }
+
+    // 4. Create the project and related data in a transaction
+    const project = await prisma.$transaction(async (tx) => {
+      const createdProject = await tx.project.create({
+        data: {
+          id, // optional: if passed, it's used; else auto-generated
+          name,
+          description,
+          createdBy: authResult.session!.user.id,
+          members: (memberIds && memberIds.length > 0 && teamMemberRoleId) ? {
+            create: memberIds.map((userId) => ({
+              userId,
+              projectRoleId: teamMemberRoleId,
+            }))
+          } : undefined
+        },
+      });
+
+      if (requirementsDocument) {
+        await tx.projectDocument.create({
+          data: {
+            projectId: createdProject.id,
+            fileUrl: requirementsDocument.key,
+            fileName: requirementsDocument.filename,
+            uploadedBy: authResult.session!.user.id,
+          },
+        });
+      }
+
+      return createdProject;
+    });
+
+    revalidatePath("/admin/projects");
+    return { success: true, projectId: project.id };
+  } catch (error) {
+    // Catch unique constraint violation on Project.name
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return {
+          error: "Validation failed",
+          fieldErrors: { name: ["A project with this name already exists"] },
+        };
+      }
+    }
+    console.error("Failed to create project:", error);
+    return { error: "Failed to create project. Please try again." };
+  }
+}
+
+/**
+ * Confirms that a requirements document has been uploaded to MinIO.
+ * Creates a new ProjectDocument row and deletes any existing one.
+ */
+export async function confirmRequirementsUpload(projectId: string, objectKey: string, originalFilename: string) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult || !authResult.session) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId, deletedAt: null },
+  });
+
+  if (!project) {
+    return { error: "Project not found" };
+  }
+
+  let oldKeys: string[] = [];
+
+  await prisma.$transaction(async (tx) => {
+    // Delete existing requirements documents for this project
+    const existingDocs = await tx.projectDocument.findMany({
+      where: { projectId },
+    });
+    
+    oldKeys = existingDocs.map(doc => doc.fileUrl);
+
+    await tx.projectDocument.deleteMany({
+      where: { projectId },
+    });
+
+    // Create the new one
+    await tx.projectDocument.create({
+      data: {
+        projectId,
+        fileUrl: objectKey,
+        fileName: originalFilename,
+        uploadedBy: authResult.session.user.id,
+      },
+    });
+  });
+
+  // Delete orphaned physical files from MinIO
+  for (const key of oldKeys) {
+    if (key) await deleteObject(key);
+  }
+
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
+  return { success: true };
+}
+
+/**
+ * Removes the requirements document from a project.
+ * (Note: Does not delete the physical object from MinIO immediately).
+ */
+export async function removeRequirementsDocument(projectId: string) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  const documents = await prisma.projectDocument.findMany({
+    where: { projectId },
+  });
+
+  await prisma.projectDocument.deleteMany({
+    where: { projectId },
+  });
+
+  // Delete physical files from MinIO
+  for (const doc of documents) {
+    if (doc.fileUrl) await deleteObject(doc.fileUrl);
+  }
+
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
+  return { success: true };
+}
+
+/**
+ * Adds a member to a project with a specific role.
+ */
+export async function addProjectMember(projectId: string, userId: string, roleId: string) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  try {
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        members: {
+          create: {
+            userId,
+            projectRoleId: roleId,
+          }
+        }
+      }
+    });
+
+    revalidatePath("/admin/projects");
+    revalidatePath(`/admin/projects/${projectId}`);
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to add member:", err);
+    return { error: "Failed to add member or user is already a member." };
+  }
+}
+
+/**
+ * Removes a member from a project.
+ */
+export async function removeProjectMember(projectId: string, userId: string) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      members: {
+        delete: {
+          projectId_userId: { projectId, userId }
+        }
+      }
+    }
+  });
+
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
+  return { success: true };
+}
+
+/**
+ * Updates a member's role within a project.
+ */
+export async function updateProjectMemberRole(projectId: string, userId: string, roleId: string) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      members: {
+        update: {
+          where: { projectId_userId: { projectId, userId } },
+          data: { projectRoleId: roleId }
+        }
+      }
+    }
+  });
+
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
+  return { success: true };
+}
+
+/**
+ * Archives a project (soft delete).
+ */
+export async function archiveProject(projectId: string) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult || !authResult.session) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId, deletedAt: null },
+  });
+
+  if (!project) {
+    return { error: "Project not found" };
+  }
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { 
+      status: "ARCHIVED",
+      deletedAt: new Date()
+    },
+  });
+
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
+  return { success: true };
+}
+
+/**
+ * Updates a project's status.
+ */
+export async function updateProjectStatus(projectId: string, newStatus: ProjectStatus) {
+  const authResult = await requireRoleAction("ADMIN");
+  if ("error" in authResult || !authResult.session) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+  });
+
+  if (!project) {
+    return { error: "Project not found" };
+  }
+
+  // If setting to ARCHIVED, we might want to also set deletedAt, but for simplicity, we'll just set status.
+  const deletedAt = newStatus === "ARCHIVED" ? new Date() : null;
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { 
+      status: newStatus,
+      deletedAt
+    },
+  });
+
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
+  return { success: true };
+}

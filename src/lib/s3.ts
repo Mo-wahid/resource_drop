@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const internalEndpoint = process.env.MINIO_INTERNAL_ENDPOINT || "localhost";
@@ -61,3 +61,20 @@ export async function generatePresignedDownloadUrl(key: string): Promise<string>
 
   return url.toString();
 }
+
+/**
+ * Deletes an object from MinIO.
+ */
+export async function deleteObject(key: string): Promise<void> {
+  const command = new DeleteObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
+
+  try {
+    await s3Client.send(command);
+  } catch (error) {
+    console.error(`Failed to delete object ${key} from S3:`, error);
+  }
+}
+

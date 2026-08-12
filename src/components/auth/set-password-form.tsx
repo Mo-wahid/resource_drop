@@ -93,7 +93,7 @@ export function SetPasswordForm({ rawToken, email }: { rawToken: string; email: 
 
       {/* Username Field */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="username" className="text-sm font-semibold">Username</Label>
+        <Label htmlFor="username" className="text-sm font-semibold" required>Username</Label>
         <div className="relative">
           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -112,7 +112,7 @@ export function SetPasswordForm({ rawToken, email }: { rawToken: string; email: 
 
       {/* Password Field */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
+        <Label htmlFor="password" className="text-sm font-semibold" required>Password</Label>
         <div className="relative">
           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -141,7 +141,7 @@ export function SetPasswordForm({ rawToken, email }: { rawToken: string; email: 
 
       {/* Confirm Password Field */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="confirmPassword" className="text-sm font-semibold">Confirm Password</Label>
+        <Label htmlFor="confirmPassword" className="text-sm font-semibold" required>Confirm Password</Label>
         <div className="relative">
           <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           <Input

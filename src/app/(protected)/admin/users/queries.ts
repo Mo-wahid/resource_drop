@@ -5,17 +5,44 @@ import { prisma } from "@/lib/db";
 /**
  * Fetch all active (non-deleted) users with their roles.
  */
-export async function getActiveUsers() {
-  return prisma.user.findMany({
-    where: {
-      accountStatus: "ACTIVE",
-      deletedAt: null,
-    },
-    include: {
-      role: { select: { name: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+export async function getActiveUsers(
+  page: number = 1,
+  pageSize: number = 8,
+  sortBy?: string,
+  sortOrder: "asc" | "desc" = "asc"
+) {
+  let orderBy: any = { createdAt: "desc" };
+  
+  if (sortBy === "joinedAt") {
+    orderBy = { createdAt: sortOrder };
+  } else if (sortBy === "role") {
+    orderBy = { role: { name: sortOrder } };
+  }
+
+  const where = {
+    accountStatus: "ACTIVE" as const,
+    deletedAt: null,
+  };
+
+  const [totalCount, users] = await Promise.all([
+    prisma.user.count({ where }),
+    prisma.user.findMany({
+      where,
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+      include: {
+        role: { select: { name: true } },
+        _count: { select: { projectMemberships: true } },
+      },
+      orderBy,
+    })
+  ]);
+
+  return {
+    users,
+    totalCount,
+    totalPages: Math.ceil(totalCount / pageSize),
+  };
 }
 
 /**
