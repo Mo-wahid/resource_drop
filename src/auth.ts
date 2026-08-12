@@ -51,8 +51,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null; // User not found or no password (e.g., OAuth-only user in the future)
         }
 
-        // Block soft-deleted or suspended accounts
-        if (user.deletedAt || user.accountStatus === "SUSPENDED") {
+        // Block non-active accounts (e.g. suspended or currently in invite/reset flow)
+        if (user.deletedAt || user.accountStatus !== "ACTIVE") {
           return null;
         }
 

@@ -43,6 +43,14 @@ enum InvitationStatus {
     REVOKED
 }
 
+enum ProjectStatus {
+    PLANNING
+    ACTIVE
+    PAUSED
+    COMPLETED
+    ARCHIVED
+}
+
 // -----------------------------------------------------------------------------
 // MODELS
 // -----------------------------------------------------------------------------
@@ -111,12 +119,13 @@ model Invitation {
 }
 
 model Project {
-    id          String    @id @default(uuid()) @db.Uuid
-    name        String    @unique
+    id          String        @id @default(uuid()) @db.Uuid
+    name        String        @unique
     description String?
-    createdBy   String    @db.Uuid
-    createdAt   DateTime  @default(now())
+    createdBy   String        @db.Uuid
+    createdAt   DateTime      @default(now())
     deletedAt   DateTime?
+    status      ProjectStatus @default(PLANNING)
 
     // Relations
     creator              User                  @relation("ProjectCreator", fields: [createdBy], references: [id])
@@ -235,11 +244,11 @@ model ResourceRequest {
     deletedAt      DateTime?
 
     // Relations
-    project      Project                @relation(fields: [projectId], references: [id])
-    user         User                   @relation("RequestUser", fields: [userId], references: [id])
-    resourceType ResourceType           @relation(fields: [resourceTypeId], references: [id])
-    history      RequestStatusHistory[]
-    comments     RequestComment[]
+    project       Project                @relation(fields: [projectId], references: [id])
+    user          User                   @relation("RequestUser", fields: [userId], references: [id])
+    resourceType  ResourceType           @relation(fields: [resourceTypeId], references: [id])
+    history       RequestStatusHistory[]
+    comments      RequestComment[]
     notifications Notification[]
 
     @@index([projectId])

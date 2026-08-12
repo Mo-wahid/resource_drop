@@ -1,28 +1,20 @@
 import { siteConfig } from "@/config/site";
 
-interface InviteEmailParams {
-  name: string;
+interface ResetEmailParams {
   rawToken: string;
-  roleName: string;
-  expiresAt: Date;
 }
 
 /**
- * Build the HTML for an invitation email.
+ * Build the HTML for a password reset email.
  */
-export function buildInviteEmail({ name, rawToken, roleName, expiresAt }: InviteEmailParams): {
+export function buildResetEmail({ rawToken }: ResetEmailParams): {
   subject: string;
   html: string;
 } {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const inviteUrl = `${appUrl}/register?token=${rawToken}`;
-  const expiryStr = expiresAt.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const resetUrl = `${appUrl}/register?token=${rawToken}`;
 
-  const subject = `You're invited to ${siteConfig.nameFull}`;
+  const subject = `Reset your ${siteConfig.nameFull} password`;
 
   const html = `
 <!DOCTYPE html>
@@ -51,28 +43,27 @@ export function buildInviteEmail({ name, rawToken, roleName, expiresAt }: Invite
           <tr>
             <td style="padding:32px;">
               <p style="margin:0 0 16px;color:#09090b;font-size:15px;line-height:1.6;">
-                Hi <strong>${name}</strong>,
+                Hello,
               </p>
               <p style="margin:0 0 24px;color:#3f3f46;font-size:14px;line-height:1.6;">
-                You've been invited to join <strong>${siteConfig.nameFull}</strong> as a
-                <strong>${roleName}</strong>. Click the button below to set your password and activate your account.
+                Someone requested a password reset for your <strong>${siteConfig.nameFull}</strong> account. Click the button below to set a new password.
               </p>
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding:8px 0 24px;">
-                    <a href="${inviteUrl}" 
+                    <a href="${resetUrl}" 
                        style="display:inline-block;padding:12px 32px;background-color:#0a4d8c;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;letter-spacing:0.01em;">
-                      Accept Invitation
+                      Reset Password
                     </a>
                   </td>
                 </tr>
               </table>
               <p style="margin:0 0 8px;color:#71717a;font-size:12px;line-height:1.5;">
-                This invitation expires on <strong>${expiryStr}</strong>.
+                This link expires in <strong>1 hour</strong>.
               </p>
               <p style="margin:0;color:#a1a1aa;font-size:11px;line-height:1.5;">
-                If you didn't expect this invitation, you can safely ignore this email.
+                If you did not request this reset, you can safely ignore this email. Your current password will remain unchanged.
               </p>
             </td>
           </tr>

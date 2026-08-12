@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, LogIn, Loader2, AlertCircle } from "lucide-react";
 
 import { loginSchema, LoginInput } from "@/lib/validation/auth";
@@ -94,7 +95,7 @@ function LoginContent() {
 
               {/* Email Field */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="email" className="text-sm font-semibold">Email Address</Label>
+                <Label htmlFor="email" className="text-sm font-semibold" required>Email Address</Label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                   <Input
@@ -115,7 +116,12 @@ function LoginContent() {
 
               {/* Password Field */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password" className="text-sm font-semibold" required>Password</Label>
+                  <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                   <Input
