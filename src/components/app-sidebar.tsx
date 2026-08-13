@@ -61,7 +61,7 @@ export function AppSidebar({ session }: AppSidebarProps) {
   const memberItems = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
     { title: "Projects", url: "/projects", icon: FolderKanban },
-    { title: "My Requests", url: "/my-requests", icon: Inbox },
+    { title: "My Requests", url: "/my-requests", matchPaths: ["/my-requests", "/requests"], icon: Inbox },
   ];
 
   const items = role === "ADMIN" ? adminItems : memberItems;
@@ -85,8 +85,12 @@ export function AppSidebar({ session }: AppSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">
-              {items.map((item) => {
-                const isActive = activeUrl === item.url || (item.url !== "/admin" && item.url !== "/dashboard" && activeUrl.startsWith(item.url));
+              {items.map((rawItem) => {
+                const item = rawItem as typeof rawItem & { matchPaths?: string[] };
+                const isActive = item.matchPaths 
+                  ? item.matchPaths.some(p => activeUrl === p || activeUrl.startsWith(`${p}/`))
+                  : activeUrl === item.url || (item.url !== "/admin" && item.url !== "/dashboard" && activeUrl.startsWith(`${item.url}/`));
+                  
                 return (
                   <SidebarMenuItem key={item.title} className="relative z-0">
                     {isActive && (

@@ -1,44 +1,37 @@
 import { prisma } from "@/lib/db";
+import { RequestStatus } from "@prisma/client";
 
-export async function getMemberAssignedProjects(userId: string) {
-  return prisma.project.findMany({
-    where: {
-      deletedAt: null,
-      status: { not: "ARCHIVED" as const },
-      members: {
-        some: { userId }
-      }
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-    orderBy: { name: "asc" }
-  });
-}
-
-export async function getMemberRequests(
-  userId: string,
+export async function getAdminRequests(
   page: number = 1,
   pageSize: number = 10,
-  sortBy: string = "createdAt",
-  sortOrder: "asc" | "desc" = "desc"
+  sortBy: string = "status",
+  sortOrder: "asc" | "desc" = "asc",
+  statusFilter?: RequestStatus | "ALL"
 ) {
-  const where = {
-    userId,
+  const where: any = {
     deletedAt: null
   };
 
-  let orderBy: any = { createdAt: "desc" };
+  if (statusFilter && statusFilter !== "ALL") {
+    where.status = statusFilter;
+  }
+
+  let orderBy: any = [];
   
   if (sortBy === "status") {
-    orderBy = { status: sortOrder };
+    // Primary sort by status, secondary by createdAt desc
+    orderBy = [{ status: sortOrder }, { createdAt: "desc" }];
   } else if (sortBy === "createdAt") {
-    orderBy = { createdAt: sortOrder };
+    orderBy = [{ createdAt: sortOrder }];
   } else if (sortBy === "project") {
-    orderBy = { project: { name: sortOrder } };
+    orderBy = [{ project: { name: sortOrder } }, { createdAt: "desc" }];
   } else if (sortBy === "type") {
-    orderBy = { resourceType: { name: sortOrder } };
+    orderBy = [{ resourceType: { name: sortOrder } }, { createdAt: "desc" }];
+  } else if (sortBy === "user") {
+    orderBy = [{ user: { username: sortOrder } }, { createdAt: "desc" }];
+  } else {
+    // Default: PENDING first, then by date
+    orderBy = [{ status: "asc" }, { createdAt: "desc" }];
   }
 
   const [totalCount, requests] = await Promise.all([
@@ -50,6 +43,9 @@ export async function getMemberRequests(
       include: {
         project: {
           select: { name: true }
+        },
+        user: {
+          select: { username: true, email: true }
         },
         resourceType: {
           select: { name: true }
@@ -66,12 +62,9 @@ export async function getMemberRequests(
   };
 }
 
-export async function getMemberRequestDetail(requestId: string, userId: string) {
+export async function getAdminRequestDetail(requestId: string) {
   return prisma.resourceRequest.findUnique({
-    where: { 
-      id: requestId,
-      userId: userId // Ensure user owns the request
-    },
+    where: { id: requestId },
     include: {
       project: true,
       user: {

@@ -196,7 +196,7 @@ async function main() {
       user: { connect: { id: members[0].id } },
       resourceType: { connect: { id: getResourceType('github_repo').id } },
       status: 'PENDING',
-      parameters: { name: 'alpha-frontend', visibility: 'private' },
+      parameters: {},
     },
   });
 
@@ -206,7 +206,7 @@ async function main() {
       user: { connect: { id: admin.id } },
       resourceType: { connect: { id: getResourceType('database').id } },
       status: 'PROVISIONED',
-      parameters: { engine: 'postgresql', size: 'medium' },
+      parameters: { engine: 'postgresql' },
     },
   });
 

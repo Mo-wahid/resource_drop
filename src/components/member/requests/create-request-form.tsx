@@ -16,8 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, GitBranch, HardDrive, Key, Database, FolderGit2, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { TagsInput } from "@/components/ui/tags-input";
 
 type AssignedProject = {
   id: string;
@@ -25,10 +26,10 @@ type AssignedProject = {
 };
 
 const RESOURCE_TYPES = [
-  { id: "github_repo", name: "GitHub Repo" },
-  { id: "object_storage", name: "Object Storage Bucket" },
-  { id: "api_key", name: "API Key" },
-  { id: "database", name: "Database" },
+  { id: "github_repo", name: "GitHub Repo", icon: GitBranch },
+  { id: "object_storage", name: "Object Storage Bucket", icon: HardDrive },
+  { id: "api_key", name: "API Key", icon: Key },
+  { id: "database", name: "Database", icon: Database },
 ] as const;
 
 export function CreateRequestForm({
@@ -54,8 +55,6 @@ export function CreateRequestForm({
     defaultValues: {
       projectId: "",
       resourceType: "github_repo",
-      name: "",
-      visibility: "private",
     } as RequestFormInput, // cast to handle the discriminated union correctly
   });
 
@@ -67,14 +66,12 @@ export function CreateRequestForm({
     if (!type) return;
     setValue("resourceType", type as any);
     // Reset specific fields when switching to prevent lingering validation errors
-    if (type === "github_repo") {
-      setValue("name", "");
-      setValue("visibility", "private");
-    } else if (type === "object_storage" || type === "api_key") {
+    if (type === "object_storage") {
       setValue("purpose", "");
+    } else if (type === "api_key") {
+      setValue("keys", []);
     } else if (type === "database") {
       setValue("engine", "postgresql");
-      setValue("size", "small");
     }
   };
 
@@ -115,7 +112,8 @@ export function CreateRequestForm({
           onValueChange={(val) => setValue("projectId", val || "")}
         >
           <SelectTrigger>
-            <span className="flex flex-1 text-left text-sm">
+            <span className="flex flex-1 items-center gap-2 text-left text-sm">
+              <FolderGit2 className="size-4 text-muted-foreground" />
               {projects.find((p) => p.id === projectId)?.name || "Select a project"}
             </span>
           </SelectTrigger>
@@ -125,7 +123,10 @@ export function CreateRequestForm({
             ) : (
               projects.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
-                  {p.name}
+                  <div className="flex items-center gap-2">
+                    <FolderGit2 className="size-4 text-muted-foreground" />
+                    <span>{p.name}</span>
+                  </div>
                 </SelectItem>
               ))
             )}
@@ -143,16 +144,31 @@ export function CreateRequestForm({
           onValueChange={handleResourceTypeChange}
         >
           <SelectTrigger>
-            <span className="flex flex-1 text-left text-sm">
-              {RESOURCE_TYPES.find((r) => r.id === resourceType)?.name || "Select a resource type"}
+            <span className="flex flex-1 items-center gap-2 text-left text-sm">
+              {(() => {
+                const rt = RESOURCE_TYPES.find((r) => r.id === resourceType);
+                const Icon = rt?.icon;
+                return (
+                  <>
+                    {Icon && <Icon className="size-4 text-muted-foreground" />}
+                    <span>{rt?.name || "Select a resource type"}</span>
+                  </>
+                );
+              })()}
             </span>
           </SelectTrigger>
           <SelectContent>
-            {RESOURCE_TYPES.map((r) => (
-              <SelectItem key={r.id} value={r.id}>
-                {r.name}
-              </SelectItem>
-            ))}
+            {RESOURCE_TYPES.map((r) => {
+              const Icon = r.icon;
+              return (
+                <SelectItem key={r.id} value={r.id}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="size-4 text-muted-foreground" />
+                    <span>{r.name}</span>
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         {/* @ts-ignore */}
@@ -162,119 +178,81 @@ export function CreateRequestForm({
         )}
       </div>
 
-      <div className="pt-2 border-t border-border mt-4">
-        {/* Render fields conditionally based on the resource type */}
-        {resourceType === "github_repo" && (
-          <div className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="name" required>Repository Name</Label>
-              <Input id="name" placeholder="my-awesome-repo" {...register("name")} />
-              {/* @ts-ignore */}
-              {errors.name && (
-                // @ts-ignore
-                <p className="text-tiny font-medium text-destructive">{errors.name.message}</p>
-              )}
+      {resourceType !== "github_repo" && (
+        <div className="pt-2 border-t border-border mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          {resourceType === "object_storage" && (
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="purpose" required>Purpose</Label>
+                <Input id="purpose" placeholder="Briefly describe what this will be used for..." {...register("purpose")} />
+                {/* @ts-ignore */}
+                {errors.purpose && (
+                  // @ts-ignore
+                  <p className="text-tiny font-medium text-destructive">{errors.purpose.message}</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="visibility" required>Visibility</Label>
-              <Select 
-                // @ts-ignore
-                value={watch("visibility")} 
-                onValueChange={(val) => setValue("visibility", val as any)}
-              >
-                <SelectTrigger>
-                  <span className="flex flex-1 text-left text-sm">
-                    {/* @ts-ignore */}
-                    {watch("visibility") === "public" ? "Public" : "Private"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="private">Private</SelectItem>
-                  <SelectItem value="public">Public</SelectItem>
-                </SelectContent>
-              </Select>
-              {/* @ts-ignore */}
-              {errors.visibility && (
-                // @ts-ignore
-                <p className="text-tiny font-medium text-destructive">{errors.visibility.message}</p>
-              )}
-            </div>
-          </div>
-        )}
+          )}
 
-        {(resourceType === "object_storage" || resourceType === "api_key") && (
-          <div className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="purpose" required>Purpose</Label>
-              <Input id="purpose" placeholder="Briefly describe what this will be used for..." {...register("purpose")} />
-              {/* @ts-ignore */}
-              {errors.purpose && (
-                // @ts-ignore
-                <p className="text-tiny font-medium text-destructive">{errors.purpose.message}</p>
-              )}
+          {resourceType === "api_key" && (
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="keys" required>Keys</Label>
+                <TagsInput 
+                  // @ts-ignore
+                  value={watch("keys") || []}
+                  onChange={(newKeys) => setValue("keys", newKeys as any)}
+                  placeholder="e.g. STRIPE_SECRET_KEY"
+                />
+                {/* @ts-ignore */}
+                {errors.keys && (
+                  // @ts-ignore
+                  <p className="text-tiny font-medium text-destructive">{errors.keys.message}</p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {resourceType === "database" && (
-          <div className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="engine" required>Database Engine</Label>
-              <Select 
-                // @ts-ignore
-                value={watch("engine")} 
-                onValueChange={(val) => setValue("engine", val as any)}
-              >
-                <SelectTrigger>
-                  <span className="flex flex-1 text-left text-sm capitalize">
-                    {/* @ts-ignore */}
-                    {watch("engine") || "postgresql"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="postgresql">PostgreSQL</SelectItem>
-                  <SelectItem value="mysql">MySQL</SelectItem>
-                  <SelectItem value="mongodb">MongoDB</SelectItem>
-                </SelectContent>
-              </Select>
-              {/* @ts-ignore */}
-              {errors.engine && (
-                // @ts-ignore
-                <p className="text-tiny font-medium text-destructive">{errors.engine.message}</p>
-              )}
+          {resourceType === "database" && (
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="engine" required>Database Engine</Label>
+                <Select 
+                  // @ts-ignore
+                  value={watch("engine")} 
+                  onValueChange={(val) => setValue("engine", val as any)}
+                >
+                  <SelectTrigger>
+                    <span className="flex flex-1 text-left text-sm capitalize">
+                      {/* @ts-ignore */}
+                      {watch("engine") || "postgresql"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="postgresql">PostgreSQL</SelectItem>
+                    <SelectItem value="mysql">MySQL</SelectItem>
+                    <SelectItem value="mongodb">MongoDB</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* @ts-ignore */}
+                {errors.engine && (
+                  // @ts-ignore
+                  <p className="text-tiny font-medium text-destructive">{errors.engine.message}</p>
+                )}
+              </div>
+
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="size" required>Size</Label>
-              <Select 
-                // @ts-ignore
-                value={watch("size")} 
-                onValueChange={(val) => setValue("size", val as any)}
-              >
-                <SelectTrigger>
-                  <span className="flex flex-1 text-left text-sm capitalize">
-                    {/* @ts-ignore */}
-                    {watch("size") || "small"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="small">Small</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="large">Large</SelectItem>
-                </SelectContent>
-              </Select>
-              {/* @ts-ignore */}
-              {errors.size && (
-                // @ts-ignore
-                <p className="text-tiny font-medium text-destructive">{errors.size.message}</p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-end pt-4">
-        <Button type="submit" disabled={isPending}>
-          {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto transition-all">
+          {isPending ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : (
+            <Send className="mr-2 size-4" />
+          )}
           Submit Request
         </Button>
       </div>
