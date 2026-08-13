@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { formatDate } from "@/lib/utils";
 
 interface InviteEmailParams {
   name: string;
@@ -16,11 +17,7 @@ export function buildInviteEmail({ name, rawToken, roleName, expiresAt }: Invite
 } {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const inviteUrl = `${appUrl}/register?token=${rawToken}`;
-  const expiryStr = expiresAt.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const expiryStr = formatDate(expiresAt);
 
   const subject = `You're invited to ${siteConfig.nameFull}`;
 

@@ -171,23 +171,45 @@ export async function removeRequirementsDocument(projectId: string) {
 }
 
 /**
- * Adds a member to a project with a specific role.
+ * Syncs project members by adding new ones and removing unselected ones.
+ * New members get the default TEAM_MEMBER role.
  */
-export async function addProjectMember(projectId: string, userId: string, roleId: string) {
+export async function syncProjectMembers(projectId: string, userIds: string[]) {
   const authResult = await requireRoleAction("ADMIN");
   if ("error" in authResult) {
     return { error: authResult.error || "Unauthorized" };
   }
 
   try {
+    const role = await prisma.role.findUnique({ where: { name: "TEAM_MEMBER" } });
+    if (!role) return { error: "Team member role not found" };
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: { members: true }
+    });
+    
+    if (!project) return { error: "Project not found" };
+    
+    const currentMemberIds = project.members.map(m => m.userId);
+    const toAdd = userIds.filter(id => !currentMemberIds.includes(id));
+    const toRemove = currentMemberIds.filter(id => !userIds.includes(id));
+
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      return { success: true };
+    }
+
     await prisma.project.update({
       where: { id: projectId },
       data: {
         members: {
-          create: {
+          delete: toRemove.map(userId => ({
+            projectId_userId: { projectId, userId }
+          })),
+          create: toAdd.map(userId => ({
             userId,
-            projectRoleId: roleId,
-          }
+            projectRoleId: role.id,
+          }))
         }
       }
     });
@@ -196,8 +218,8 @@ export async function addProjectMember(projectId: string, userId: string, roleId
     revalidatePath(`/admin/projects/${projectId}`);
     return { success: true };
   } catch (err) {
-    console.error("Failed to add member:", err);
-    return { error: "Failed to add member or user is already a member." };
+    console.error("Failed to sync members:", err);
+    return { error: "Failed to update project members." };
   }
 }
 
