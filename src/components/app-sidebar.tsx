@@ -53,8 +53,8 @@ export function AppSidebar({ session }: AppSidebarProps) {
   const adminItems = [
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
     { title: "Projects", url: "/admin/projects", icon: FolderKanban },
-    { title: "Users & Roles", url: "/admin/users", icon: Users },
     { title: "Requests", url: "/admin/requests", icon: Inbox },
+    { title: "Users & Roles", url: "/admin/users", icon: Users },
     { title: "Audit Log", url: "/admin/audit-log", icon: History },
   ];
 

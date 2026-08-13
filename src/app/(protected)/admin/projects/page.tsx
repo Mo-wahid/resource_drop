@@ -10,7 +10,7 @@ export default async function AdminProjectsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const view = params.view === "archived" ? "archived" : "active";
+  const view = params.view === "inactive" ? "inactive" : "active";
   
   const page = parseInt(params.page as string) || 1;
   const sortBy = params.sortBy as string | undefined;
@@ -39,7 +39,7 @@ export default async function AdminProjectsPage({
 
       <div className="flex flex-col gap-4">
         <ProjectsViewToggle view={view} />
-        <div key={`${view}-${page}`} className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
+        <div key={`${view}-${page}`} className={`animate-in fade-in ${view === "active" ? "slide-in-from-right-4" : "slide-in-from-left-4"} duration-500 ease-out fill-mode-both`}>
           <ProjectsTable 
             projects={projectData.projects} 
             currentPage={page} 

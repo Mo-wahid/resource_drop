@@ -13,6 +13,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { RequestStatus } from "@prisma/client";
 
+import { ProvisionResourceForm } from "@/components/admin/requests/provision-resource-form";
+import { CheckCircle2 } from "lucide-react";
+
 const statusColors: Record<RequestStatus, string> = {
   PENDING: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   ACCEPTED: "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -64,14 +67,30 @@ export default async function AdminRequestDetailPage({
         <div className="md:col-span-2 space-y-8">
           <RequestDetailCard request={request} />
           
-          <Card className="shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
-                <p className="text-sm font-medium">Provisioning Management Coming Soon</p>
-                <p className="text-xs mt-1">This space will be used to manage the resource setup.</p>
-              </div>
-            </CardContent>
-          </Card>
+          {request.status === "PENDING" || request.status === "ACCEPTED" ? (
+            <ProvisionResourceForm request={request} />
+          ) : request.status === "PROVISIONED" ? (
+            <Card className="shadow-sm border-green-500/20 bg-green-500/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center justify-center py-8 text-center text-green-600">
+                  <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
+                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                  </div>
+                  <p className="text-base font-medium">Resource Provisioned</p>
+                  <p className="text-sm mt-1 text-green-600/80">This resource has been successfully provisioned for the member.</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
+                  <p className="text-sm font-medium">Request Closed</p>
+                  <p className="text-xs mt-1">This request was rejected or revoked.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Column - Timeline, Comments */}

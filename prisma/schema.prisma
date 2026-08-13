@@ -204,12 +204,14 @@ model ProvisionedResource {
     resourceTypeId    String    @db.Uuid
     vaultReference    String?
     connectionDetails Json?
+    requestId         String?   @unique @db.Uuid
     createdAt         DateTime  @default(now())
     deletedAt         DateTime?
 
     // Relations
     project      Project              @relation(fields: [projectId], references: [id])
     resourceType ResourceType         @relation(fields: [resourceTypeId], references: [id])
+    request      ResourceRequest?     @relation(fields: [requestId], references: [id])
     attachments  ResourceAttachment[]
 
     @@index([projectId])
@@ -247,9 +249,10 @@ model ResourceRequest {
     project       Project                @relation(fields: [projectId], references: [id])
     user          User                   @relation("RequestUser", fields: [userId], references: [id])
     resourceType  ResourceType           @relation(fields: [resourceTypeId], references: [id])
-    history       RequestStatusHistory[]
-    comments      RequestComment[]
-    notifications Notification[]
+    history              RequestStatusHistory[]
+    comments             RequestComment[]
+    notifications        Notification[]
+    provisionedResource  ProvisionedResource?
 
     @@index([projectId])
     @@index([userId])

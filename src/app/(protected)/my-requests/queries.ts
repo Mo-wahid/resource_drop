@@ -4,7 +4,7 @@ export async function getMemberAssignedProjects(userId: string) {
   return prisma.project.findMany({
     where: {
       deletedAt: null,
-      status: { not: "ARCHIVED" as const },
+      status: { notIn: ["ARCHIVED", "COMPLETED"] },
       members: {
         some: { userId }
       }
@@ -24,9 +24,12 @@ export async function getMemberRequests(
   sortBy: string = "createdAt",
   sortOrder: "asc" | "desc" = "desc"
 ) {
-  const where = {
+  const where: any = {
     userId,
-    deletedAt: null
+    deletedAt: null,
+    project: {
+      status: { notIn: ["ARCHIVED", "COMPLETED"] }
+    }
   };
 
   let orderBy: any = { createdAt: "desc" };
@@ -67,10 +70,13 @@ export async function getMemberRequests(
 }
 
 export async function getMemberRequestDetail(requestId: string, userId: string) {
-  return prisma.resourceRequest.findUnique({
+  return prisma.resourceRequest.findFirst({
     where: { 
       id: requestId,
-      userId: userId // Ensure user owns the request
+      userId: userId, // Ensure user owns the request
+      project: {
+        status: { notIn: ["ARCHIVED", "COMPLETED"] }
+      }
     },
     include: {
       project: true,
@@ -93,7 +99,8 @@ export async function getMemberRequestDetail(requestId: string, userId: string) 
           }
         },
         orderBy: { createdAt: "asc" }
-      }
+      },
+      provisionedResource: true,
     }
   });
 }

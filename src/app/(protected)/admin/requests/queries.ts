@@ -86,7 +86,8 @@ export async function getAdminRequestDetail(requestId: string) {
           }
         },
         orderBy: { createdAt: "asc" }
-      }
+      },
+      provisionedResource: true,
     }
   });
 }

@@ -132,3 +132,84 @@ export async function addRequestComment(requestId: string, message: string) {
     return { error: "Failed to add comment" };
   }
 }
+
+export async function provisionRequestAction(
+  requestId: string,
+  data: { vaultReference?: string; connectionDetails?: any }
+) {
+  const authResult = await requireAuthAction();
+  if ("error" in authResult || !authResult.session) {
+    return { error: authResult.error || "Unauthorized" };
+  }
+
+  if (authResult.session.user.role !== "ADMIN") {
+    return { error: "Only administrators can provision resources" };
+  }
+
+  try {
+    const request = await prisma.resourceRequest.findUnique({
+      where: { id: requestId },
+      include: { project: true }
+    });
+
+    if (!request) {
+      return { error: "Request not found" };
+    }
+
+    if (request.status === "PROVISIONED" || request.status === "REJECTED" || request.status === "REVOKED") {
+      return { error: "Request cannot be provisioned in its current status" };
+    }
+
+    // Perform provision in a transaction
+    await prisma.$transaction(async (tx) => {
+      // 1. Create ProvisionedResource
+      await tx.provisionedResource.create({
+        data: {
+          projectId: request.projectId,
+          resourceTypeId: request.resourceTypeId,
+          requestId: request.id,
+          vaultReference: data.vaultReference || null,
+          connectionDetails: data.connectionDetails || {},
+        },
+      });
+
+      // 2. Update status
+      const newStatus = "PROVISIONED";
+      await tx.resourceRequest.update({
+        where: { id: requestId },
+        data: { status: newStatus },
+      });
+
+      // 3. Add history record
+      await tx.requestStatusHistory.create({
+        data: {
+          requestId,
+          changedBy: authResult.session.user.id,
+          previousStatus: request.status,
+          newStatus,
+          notes: "Resource provisioned successfully.",
+        },
+      });
+
+      // 4. Add a notification for the requesting user
+      await tx.notification.create({
+        data: {
+          userId: request.userId,
+          requestId: requestId,
+          message: "Your requested resource has been provisioned.",
+        },
+      });
+    });
+
+    revalidatePath("/admin/requests");
+    revalidatePath(`/admin/requests/${requestId}`);
+    revalidatePath("/my-requests");
+    revalidatePath(`/requests/${requestId}`);
+    revalidatePath(`/projects/${request.projectId}`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to provision request:", error);
+    return { error: "Failed to provision resource" };
+  }
+}

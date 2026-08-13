@@ -1,17 +1,15 @@
 import { prisma } from "@/lib/db";
 
 export async function getProjects(
-  view: "active" | "archived" = "active",
+  view: "active" | "inactive" = "active",
   page: number = 1,
   pageSize: number = 8,
   sortBy?: string,
   sortOrder: "asc" | "desc" = "asc"
 ) {
-  const isArchived = view === "archived";
-  
-  const where = isArchived 
-    ? { status: "ARCHIVED" as const } 
-    : { status: { not: "ARCHIVED" as const }, deletedAt: null };
+  const where: any = view === "inactive" 
+    ? { status: { in: ["COMPLETED", "PAUSED", "ARCHIVED"] } } 
+    : { status: { in: ["PLANNING", "ACTIVE"] }, deletedAt: null };
 
   let orderBy: any = { createdAt: "desc" };
   

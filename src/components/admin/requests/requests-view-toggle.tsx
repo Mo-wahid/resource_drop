@@ -4,20 +4,20 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 
-export function ProjectsViewToggle({ view }: { view: "active" | "inactive" }) {
+export function RequestsViewToggle({ view }: { view: "pending" | "all" }) {
   return (
     <div className="flex items-center gap-1 bg-muted/30 p-1 w-fit rounded-lg border relative">
       <Link 
-        href="/admin/projects" 
+        href="/admin/requests" 
         className={cn(
           "relative z-10 h-8 rounded-md px-4 text-xs flex items-center justify-center font-semibold transition-colors duration-300",
-          view === "active" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+          view === "pending" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
         )}
       >
-        Active Projects
-        {view === "active" && (
+        Pending Requests
+        {view === "pending" && (
           <motion.div
-            layoutId="projects-toggle-indicator"
+            layoutId="requests-toggle-indicator"
             className="absolute inset-0 bg-primary shadow-sm rounded-md -z-10"
             transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
           />
@@ -25,16 +25,16 @@ export function ProjectsViewToggle({ view }: { view: "active" | "inactive" }) {
       </Link>
       
       <Link 
-        href="/admin/projects?view=inactive" 
+        href="/admin/requests?view=all" 
         className={cn(
           "relative z-10 h-8 rounded-md px-4 text-xs flex items-center justify-center font-semibold transition-colors duration-300",
-          view === "inactive" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+          view === "all" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
         )}
       >
-        Inactive Projects
-        {view === "inactive" && (
+        All Requests
+        {view === "all" && (
           <motion.div
-            layoutId="projects-toggle-indicator"
+            layoutId="requests-toggle-indicator"
             className="absolute inset-0 bg-primary shadow-sm rounded-md -z-10"
             transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
           />

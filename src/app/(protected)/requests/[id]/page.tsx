@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { RequestDetailCard } from "@/components/admin/requests/request-detail-card";
 import { RequestTimeline } from "@/components/admin/requests/request-timeline";
 import { RequestComments } from "@/components/admin/requests/request-comments";
+import { ProvisionedResourceDetails } from "@/components/member/requests/provisioned-resource-details";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -63,14 +64,7 @@ export default async function MemberRequestDetailPage({
         <div className="md:col-span-2 space-y-8">
           <RequestDetailCard request={request} />
           
-          <Card className="shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
-                <p className="text-sm font-medium">Provisioning Management Coming Soon</p>
-                <p className="text-xs mt-1">This space will be used to view the resource setup details.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <ProvisionedResourceDetails resource={request.provisionedResource} request={request} />
         </div>
 
         {/* Right Column - Actions, Timeline, Comments */}
