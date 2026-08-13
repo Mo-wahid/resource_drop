@@ -1,7 +1,7 @@
 import { Project, User } from "@prisma/client";
-import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, User as UserIcon } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 type ProjectWithCreator = Project & {
   creator: { username: string };
@@ -24,7 +24,7 @@ export function ProjectDetailCard({ project }: { project: ProjectWithCreator }) 
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="size-4 shrink-0" />
-            <span>Created {formatDistanceToNow(new Date(project.createdAt), { addSuffix: true })}</span>
+            <span>Created {formatDate(project.createdAt)}</span>
           </div>
         </div>
       </CardContent>

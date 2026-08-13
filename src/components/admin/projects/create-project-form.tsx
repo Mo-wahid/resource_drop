@@ -122,7 +122,7 @@ export function CreateProjectForm({
       </div>
 
       <div className="flex justify-end pt-2">
-        <Button type="submit" variant="solid" disabled={isPending}>
+        <Button type="submit" disabled={isPending}>
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
           Create Project
         </Button>

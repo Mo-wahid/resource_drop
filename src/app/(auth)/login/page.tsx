@@ -149,7 +149,7 @@ function LoginContent() {
               </div>
 
               {/* Submit Button */}
-              <Button type="submit" disabled={isSubmitting} className="w-full h-11 rounded-input mt-1 text-sm font-medium">
+              <Button variant="auth" type="submit" disabled={isSubmitting} className="w-full h-11 rounded-input mt-1 text-sm font-medium">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin" />

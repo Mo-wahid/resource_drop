@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
                     </div>
 
                     {/* Submit Button */}
-                    <Button type="submit" disabled={isSubmitting} className="w-full h-11 rounded-input mt-2 text-sm font-medium">
+                    <Button variant="auth" type="submit" disabled={isSubmitting} className="w-full h-11 rounded-input mt-2 text-sm font-medium">
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 size-4 animate-spin" />

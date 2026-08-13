@@ -75,7 +75,7 @@ export async function getPendingInvitations() {
   return invitations.map((inv) => ({
     id: inv.id,
     email: inv.email,
-    name: nameMap.get(inv.email) || inv.email,
+    name: nameMap.get(inv.email) || "—",
     roleName: inv.role.name,
     inviterName: inv.inviter.username,
     createdAt: inv.createdAt,

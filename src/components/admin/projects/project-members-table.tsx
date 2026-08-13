@@ -5,16 +5,17 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { UserPlus, Loader2, Trash2 } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
+import { UserPlus, Loader2, Trash2, Users } from "lucide-react";
 import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription
 } from "@/components/ui/dialog";
-import { addProjectMember, removeProjectMember } from "@/app/(protected)/admin/projects/actions";
+import { syncProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/app/(protected)/admin/projects/actions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { MemberSelectField } from "./member-select-field";
 
 type Member = {
   user: { id: string; username: string; email: string };
@@ -30,10 +31,66 @@ type EligibleMember = {
   email: string;
 };
 
-const roleColors: Record<string, string> = {
-  ADMIN: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  TEAM_MEMBER: "text-foreground border-border bg-transparent",
-};
+function MemberRow({ 
+  member, 
+  roles, 
+  isPending, 
+  onRoleChange, 
+  onRemove 
+}: { 
+  member: Member, 
+  roles: Role[], 
+  isPending: boolean,
+  onRoleChange: (userId: string, roleId: string) => void,
+  onRemove: (userId: string, username: string) => void
+}) {
+  // Fully controlled state to avoid Base UI errors and ensure SelectValue resolves correctly
+  const [roleId, setRoleId] = useState(member.role.id);
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{member.user.username}</TableCell>
+      <TableCell className="text-muted-foreground">{member.user.email}</TableCell>
+      <TableCell>
+        <Select 
+          value={roleId} 
+          onValueChange={(val) => {
+            if (!val) return;
+            setRoleId(val);
+            onRoleChange(member.user.id, val);
+          }}
+          disabled={isPending}
+        >
+          <SelectTrigger className="h-8 w-[160px]">
+            <span className="flex flex-1 text-left text-sm">
+              {roles.find(r => r.id === roleId)?.name.replace('_', ' ') || ""}
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            {roles.map(r => (
+              <SelectItem key={r.id} value={r.id}>
+                {r.name.replace('_', ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell suppressHydrationWarning>{formatDate(member.assignedAt)}</TableCell>
+      <TableCell className="text-right">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive" 
+          disabled={isPending}
+          onClick={() => onRemove(member.user.id, member.user.username)}
+        >
+          <Trash2 className="size-4" />
+          <span className="sr-only">Remove</span>
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export function ProjectMembersTable({
   projectId,
@@ -50,21 +107,17 @@ export function ProjectMembersTable({
   const [isPending, startTransition] = useTransition();
   const [isAddOpen, setIsAddOpen] = useState(false);
   
-  // Add Member State
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const memberIds = members.map(m => m.user.id);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(memberIds);
 
-  const handleAddMember = () => {
-    if (!selectedUserId || !selectedRoleId) return;
+  const handleSyncMembers = () => {
     startTransition(async () => {
-      const res = await addProjectMember(projectId, selectedUserId, selectedRoleId);
+      const res = await syncProjectMembers(projectId, selectedUserIds);
       if (res.error) {
         toast.error(res.error);
       } else {
-        toast.success("Member added to project");
+        toast.success("Project members updated");
         setIsAddOpen(false);
-        setSelectedUserId("");
-        setSelectedRoleId("");
         router.refresh();
       }
     });
@@ -82,63 +135,63 @@ export function ProjectMembersTable({
     });
   };
 
-  // Filter out users who are already members
-  const memberIds = members.map(m => m.user.id);
-  const availableUsers = eligibleMembers.filter(u => !memberIds.includes(u.id));
+  const handleRoleChange = (userId: string, roleId: string) => {
+    startTransition(async () => {
+      const res = await updateProjectMemberRole(projectId, userId, roleId);
+      if (res.error) {
+        toast.error(res.error);
+      } else {
+        toast.success("Role updated");
+        router.refresh();
+      }
+    });
+  };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Project Members</CardTitle>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger render={<Button variant="outline" size="sm" className="h-8" />}>
-            <UserPlus className="mr-2 size-3.5" />
-            Add Member
-          </DialogTrigger>
-          <DialogContent>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="size-5 text-muted-foreground" />
+            Project Team
+          </CardTitle>
+          <CardDescription className="mt-1">People with access to this project</CardDescription>
+        </div>
+        <Dialog 
+          open={isAddOpen} 
+          onOpenChange={(open) => {
+            if (open) setSelectedUserIds(members.map(m => m.user.id));
+            setIsAddOpen(open);
+          }}
+        >
+          <DialogTrigger render={
+            <Button variant="outline" size="sm" className="h-8">
+              <UserPlus className="mr-2 size-3.5" />
+              Manage Members
+            </Button>
+          } />
+          <DialogContent className="overflow-visible">
             <DialogHeader>
-              <DialogTitle>Add Project Member</DialogTitle>
+              <DialogTitle>Manage Project Members</DialogTitle>
+              <DialogDescription>
+                Select members to add to the project. Unselecting an existing member will remove them.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">User</label>
-                <Select value={selectedUserId} onValueChange={(val) => setSelectedUserId(val || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableUsers.map(u => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.username} ({u.email})
-                      </SelectItem>
-                    ))}
-                    {availableUsers.length === 0 && (
-                      <SelectItem value="none" disabled>No eligible users available</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Role</label>
-                <Select value={selectedRoleId} onValueChange={(val) => setSelectedRoleId(val || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map(r => (
-                      <SelectItem key={r.id} value={r.id}>
-                        {r.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label className="text-sm font-medium">Team Members</label>
+                <MemberSelectField 
+                  eligibleMembers={eligibleMembers}
+                  selectedIds={selectedUserIds}
+                  onChange={setSelectedUserIds}
+                />
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddOpen(false)} disabled={isPending}>Cancel</Button>
-              <Button onClick={handleAddMember} disabled={!selectedUserId || !selectedRoleId || isPending}>
+              <Button onClick={handleSyncMembers} disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Add Member
+                Save Changes
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -149,11 +202,11 @@ export function ProjectMembersTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
+                <TableHead className="w-[250px]">User</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Assigned</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[200px]">Role</TableHead>
+                <TableHead className="w-[150px]">Assigned</TableHead>
+                <TableHead className="w-[100px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -165,28 +218,14 @@ export function ProjectMembersTable({
                 </TableRow>
               ) : (
                 members.map((member) => (
-                  <TableRow key={member.user.id}>
-                    <TableCell className="font-medium">{member.user.username}</TableCell>
-                    <TableCell className="text-muted-foreground">{member.user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`rounded-md w-24 justify-center ${roleColors[member.role.name] || "bg-gray-500/10 text-gray-500 border-gray-500/20"}`}>
-                        {member.role.name.replace('_', ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell suppressHydrationWarning>{new Date(member.assignedAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive" 
-                        disabled={isPending}
-                        onClick={() => handleRemoveMember(member.user.id, member.user.username)}
-                      >
-                        <Trash2 className="size-4" />
-                        <span className="sr-only">Remove</span>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <MemberRow 
+                    key={member.user.id} 
+                    member={member} 
+                    roles={roles} 
+                    isPending={isPending} 
+                    onRoleChange={handleRoleChange} 
+                    onRemove={handleRemoveMember} 
+                  />
                 ))
               )}
             </TableBody>

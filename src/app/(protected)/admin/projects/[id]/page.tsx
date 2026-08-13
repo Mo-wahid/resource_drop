@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, User as UserIcon } from "lucide-react";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+import { formatDate } from "@/lib/utils";
 import { ProjectStatusSelect } from "@/components/admin/projects/project-status-select";
 
 export default async function AdminProjectDetailPage({
@@ -57,7 +57,7 @@ export default async function AdminProjectDetailPage({
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="size-4 shrink-0" />
-              <span>Created {formatDistanceToNow(new Date(project.createdAt), { addSuffix: true })}</span>
+              <span>Created {formatDate(project.createdAt)}</span>
             </div>
           </div>
         </div>

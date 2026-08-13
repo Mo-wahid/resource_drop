@@ -43,7 +43,7 @@ export default function GlobalError({
         </div>
 
         <div className="pt-4">
-          <Button variant="solid" onClick={() => reset()} className="w-full">
+          <Button onClick={() => reset()} className="w-full">
             <RefreshCw className="mr-2 size-4" />
             Try again
           </Button>

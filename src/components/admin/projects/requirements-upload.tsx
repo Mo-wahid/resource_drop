@@ -220,7 +220,10 @@ export function RequirementsUpload({
       onDrop={onDrop}
     >
       <CardHeader>
-        <CardTitle className="text-lg">Documents</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <FileText className="size-5 text-muted-foreground" />
+          Requirements
+        </CardTitle>
         <CardDescription>
           Accepted formats: PDF, MD, DOCX. Max size: 10MB. Or drag and drop here.
         </CardDescription>

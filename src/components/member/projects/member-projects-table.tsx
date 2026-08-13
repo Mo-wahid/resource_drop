@@ -31,30 +31,30 @@ const statusColors: Record<ProjectStatus, string> = {
   ARCHIVED: "bg-gray-500/10 text-gray-500 border-gray-500/20",
 };
 
-interface ProjectsTableProps {
+interface MemberProjectsTableProps {
   projects: ProjectWithRelations[];
   currentPage: number;
   totalPages: number;
   totalCount: number;
 }
 
-export function ProjectsTable({ projects, currentPage, totalPages, totalCount }: ProjectsTableProps) {
+export function MemberProjectsTable({ projects, currentPage, totalPages, totalCount }: MemberProjectsTableProps) {
   const router = useRouter();
 
   if (totalCount === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-card">
         <FolderGit2 className="size-12 text-muted-foreground/50 mb-4" />
-        <h3 className="text-lg font-medium">No projects found</h3>
+        <h3 className="text-lg font-medium">No projects assigned</h3>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-          Get started by creating your first project to organize resources and team members.
+          You haven't been assigned to any projects yet. When an admin adds you to a project, it will appear here.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border border-border">
+    <div className="rounded-md border border-border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
@@ -73,8 +73,8 @@ export function ProjectsTable({ projects, currentPage, totalPages, totalCount }:
             return (
               <TableRow 
                 key={project.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => router.push(`/admin/projects/${project.id}`)}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => router.push(`/projects/${project.id}`)}
               >
                 <TableCell className="font-medium">{project.name}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[300px]">
@@ -83,7 +83,7 @@ export function ProjectsTable({ projects, currentPage, totalPages, totalCount }:
                 <TableCell>{project.creator.username}</TableCell>
                 <TableCell className="text-right">{project._count.members}</TableCell>
                 <TableCell className="text-center">
-                  <Badge variant="outline" className={`rounded-md w-24 justify-center ${statusColors[project.status]}`}>
+                  <Badge variant="outline" className={`rounded-md w-24 justify-center ${statusColors[project.status] || "bg-muted text-muted-foreground"}`}>
                     {project.status.replace('_', ' ')}
                   </Badge>
                 </TableCell>
