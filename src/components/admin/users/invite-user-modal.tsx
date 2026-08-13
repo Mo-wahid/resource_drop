@@ -19,7 +19,7 @@ export function InviteUserModal() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger render={
-        <Button variant="solid">
+        <Button>
           <UserPlus className="mr-2 size-4" />
           Invite User
         </Button>

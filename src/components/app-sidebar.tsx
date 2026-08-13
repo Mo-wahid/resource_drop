@@ -60,6 +60,7 @@ export function AppSidebar({ session }: AppSidebarProps) {
 
   const memberItems = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+    { title: "Projects", url: "/projects", icon: FolderKanban },
     { title: "My Requests", url: "/my-requests", icon: Inbox },
   ];
 

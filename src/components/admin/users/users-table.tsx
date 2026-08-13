@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { DeleteUserButton } from "./delete-user-button";
 import { SortableTableHead, TablePagination } from "@/components/admin/table-utils";
 import { useSearchParams } from "next/navigation";
+import { formatDate } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -25,6 +26,7 @@ interface User {
 const roleColors: Record<string, string> = {
   ADMIN: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   TEAM_MEMBER: "text-foreground border-border bg-transparent",
+  PROJECT_VIEWER: "text-foreground border-border bg-transparent",
 };
 
 interface UsersTableProps {
@@ -73,14 +75,14 @@ export function UsersTable({ users, currentUserId, currentPage, totalPages, tota
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={`rounded-md w-24 justify-center ${roleColors[user.role.name] || "bg-gray-500/10 text-gray-500 border-gray-500/20"}`}>
+                  <Badge variant="outline" className={`rounded-md w-32 justify-center ${roleColors[user.role.name] || "bg-gray-500/10 text-gray-500 border-gray-500/20"}`}>
                     {user.role.name.replace('_', ' ')}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center font-mono">
                   {user._count.projectMemberships}
                 </TableCell>
-                <TableCell suppressHydrationWarning>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell suppressHydrationWarning>{formatDate(user.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   {isSelf ? (
                     <span className="text-xs font-medium text-muted-foreground pr-2">You</span>

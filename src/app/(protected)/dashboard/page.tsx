@@ -11,7 +11,8 @@ export default async function MemberDashboardPage() {
     return <div>Unauthorized</div>;
   }
 
-  const projects = await getMemberProjects(authResult.session.user.id);
+  const projectData = await getMemberProjects(authResult.session.user.id);
+  const projects = projectData.projects;
 
   return (
     <div className="p-8 max-w-7xl mx-auto flex flex-col gap-8">
@@ -43,7 +44,12 @@ export default async function MemberDashboardPage() {
           <p className="text-sm text-muted-foreground">Jump back into your assigned work.</p>
         </div>
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
-          <MemberProjectsTable projects={projects} />
+          <MemberProjectsTable 
+          projects={projects} 
+          currentPage={1} 
+          totalPages={1} 
+          totalCount={projectData.totalCount} 
+        />
         </div>
       </div>
     </div>

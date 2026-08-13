@@ -168,7 +168,7 @@ export function SetPasswordForm({ rawToken, email }: { rawToken: string; email: 
         )}
       </div>
 
-      <Button type="submit" disabled={isPending || isSubmitting} className="w-full h-11 rounded-input mt-2 text-sm font-medium">
+      <Button variant="auth" type="submit" disabled={isPending || isSubmitting} className="w-full h-11 rounded-input mt-2 text-sm font-medium">
         {(isPending || isSubmitting) ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 
 export async function requireAuth() {
   const session = await auth();
@@ -48,3 +49,50 @@ export async function requireRoleAction(role: string) {
 
   return result;
 }
+
+export async function requireProjectMembership(projectId: string) {
+  const result = await requireAuthAction();
+  
+  if (result.error || !result.session) {
+    return { error: result.error || "Unauthorized" };
+  }
+
+  const membership = await prisma.projectMember.findUnique({
+    where: {
+      projectId_userId: {
+        projectId,
+        userId: result.session.user.id,
+      }
+    }
+  });
+
+  if (!membership) {
+    return { error: "Forbidden" };
+  }
+
+  return { session: result.session, membership };
+}
+
+export async function requireProjectMembershipApi(projectId: string) {
+  const result = await requireAuth();
+  
+  if (result instanceof NextResponse) {
+    return result; // 401 response
+  }
+
+  const membership = await prisma.projectMember.findUnique({
+    where: {
+      projectId_userId: {
+        projectId,
+        userId: result.session.user.id,
+      }
+    }
+  });
+
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return { session: result.session, membership };
+}
+

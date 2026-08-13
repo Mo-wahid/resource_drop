@@ -46,13 +46,13 @@ export async function generatePresignedUploadUrl(key: string, contentType: strin
 /**
  * Generates a presigned URL for downloading a file from MinIO.
  */
-export async function generatePresignedDownloadUrl(key: string): Promise<string> {
+export async function generatePresignedDownloadUrl(key: string, expiresIn: number = 3600): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: bucket,
     Key: key,
   });
 
-  const urlString = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  const urlString = await getSignedUrl(s3Client, command, { expiresIn });
   const url = new URL(urlString);
 
   if (internalEndpoint !== publicEndpoint) {
