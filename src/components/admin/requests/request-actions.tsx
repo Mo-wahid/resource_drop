@@ -27,11 +27,10 @@ export function RequestActions({ request }: { request: any }) {
   const [notes, setNotes] = useState("");
   const [actionType, setActionType] = useState<RequestStatus | null>(null);
 
-  const handleAction = async () => {
-    if (!actionType) return;
-    
+  const handleAction = async (action: RequestStatus) => {
+    setActionType(action);
     setIsPending(true);
-    const result = await updateRequestStatus(request.id, actionType, notes);
+    const result = await updateRequestStatus(request.id, action, notes);
     
     if (result.error) {
       toast.error(result.error);
@@ -77,10 +76,7 @@ export function RequestActions({ request }: { request: any }) {
                   <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setNotes("")}>Cancel</AlertDialogCancel>
                     <Button 
-                      onClick={() => {
-                        setActionType("ACCEPTED");
-                        handleAction();
-                      }} 
+                      onClick={() => handleAction("ACCEPTED")} 
                       disabled={isPending}
                     >
                       {isPending && actionType === "ACCEPTED" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
@@ -115,10 +111,7 @@ export function RequestActions({ request }: { request: any }) {
                     <AlertDialogCancel onClick={() => setNotes("")}>Cancel</AlertDialogCancel>
                     <Button 
                       variant="destructive"
-                      onClick={() => {
-                        setActionType("REJECTED");
-                        handleAction();
-                      }} 
+                      onClick={() => handleAction("REJECTED")} 
                       disabled={isPending}
                     >
                       {isPending && actionType === "REJECTED" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
@@ -132,44 +125,6 @@ export function RequestActions({ request }: { request: any }) {
 
           {request.status === "ACCEPTED" && (
             <>
-              <AlertDialog>
-                <AlertDialogTrigger render={
-                  <Button className="bg-green-600 hover:bg-green-700 text-white gap-2 w-full sm:w-auto">
-                    <Play className="size-4" />
-                    Mark Provisioned
-                  </Button>
-                } />
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Mark as Provisioned?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This indicates the resource has been fully set up and is ready for the user.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <div className="my-4">
-                    <Textarea 
-                      placeholder="Provide connection details, URLs, or access instructions here..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setNotes("")}>Cancel</AlertDialogCancel>
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => {
-                        setActionType("PROVISIONED");
-                        handleAction();
-                      }} 
-                      disabled={isPending}
-                    >
-                      {isPending && actionType === "PROVISIONED" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                      Confirm Provisioned
-                    </Button>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              
               <AlertDialog>
                 <AlertDialogTrigger render={
                   <Button variant="destructive" className="gap-2 w-full sm:w-auto">
@@ -195,10 +150,7 @@ export function RequestActions({ request }: { request: any }) {
                     <AlertDialogCancel onClick={() => setNotes("")}>Cancel</AlertDialogCancel>
                     <Button 
                       variant="destructive"
-                      onClick={() => {
-                        setActionType("REJECTED");
-                        handleAction();
-                      }} 
+                      onClick={() => handleAction("REJECTED")} 
                       disabled={isPending}
                     >
                       {isPending && actionType === "REJECTED" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
@@ -236,10 +188,7 @@ export function RequestActions({ request }: { request: any }) {
                   <AlertDialogCancel onClick={() => setNotes("")}>Cancel</AlertDialogCancel>
                   <Button 
                     variant="destructive"
-                    onClick={() => {
-                      setActionType("REVOKED");
-                      handleAction();
-                    }} 
+                    onClick={() => handleAction("REVOKED")} 
                     disabled={isPending}
                   >
                     {isPending && actionType === "REVOKED" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}

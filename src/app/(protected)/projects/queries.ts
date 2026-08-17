@@ -74,3 +74,13 @@ export async function getMemberProjectDetail(projectId: string, userId: string) 
     },
   });
 }
+
+export async function getMemberProjectRequests(projectId: string, userId: string) {
+  return prisma.resourceRequest.findMany({
+    where: { projectId, userId, deletedAt: null },
+    include: {
+      resourceType: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}

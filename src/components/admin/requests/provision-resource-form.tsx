@@ -37,8 +37,24 @@ export function ProvisionResourceForm({ request }: { request: any }) {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
-  if (request.status === "PROVISIONED" || request.status === "REJECTED" || request.status === "REVOKED") {
+  if (request.status !== "ACCEPTED") {
     return null;
+  }
+
+  // Validation logic
+  let isValid = false;
+  if (resourceType === "github_repo") {
+    isValid = !!formData.repositoryUrl?.trim();
+  } else if (resourceType === "database") {
+    isValid = !!formData.connectionString?.trim();
+  } else if (resourceType === "object_storage") {
+    isValid = !!(formData.bucketName?.trim() && formData.accessKeyId?.trim() && formData.secretAccessKey?.trim());
+  } else if (resourceType === "api_key") {
+    if (request.parameters?.keys && Array.isArray(request.parameters.keys) && request.parameters.keys.length > 0) {
+      isValid = request.parameters.keys.every((k: string) => !!formData[k]?.trim());
+    } else {
+      isValid = !!formData.apiKey?.trim();
+    }
   }
 
   return (
@@ -145,7 +161,7 @@ export function ProvisionResourceForm({ request }: { request: any }) {
           )}
 
           <div className="pt-2">
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button type="submit" disabled={isSubmitting || !isValid} className="w-full">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Complete Provisioning
             </Button>

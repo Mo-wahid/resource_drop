@@ -21,8 +21,8 @@ export default async function AdminRequestsPage({
   const sortBy = (sortParam as string) || "status";
   const sortOrder = (orderParam as "asc" | "desc") || "asc";
   
-  // If view is pending, force status to PENDING
-  const statusFilter = view === "pending" ? "PENDING" : ((status as RequestStatus | "ALL") || "ALL");
+  // If view is pending, force status to PENDING and ACCEPTED
+  const statusFilter = view === "pending" ? ["PENDING", "ACCEPTED"] as RequestStatus[] : ((status as RequestStatus | "ALL") || "ALL");
 
   const requestsData = await getAdminRequests(currentPage, 10, sortBy, sortOrder, statusFilter);
 

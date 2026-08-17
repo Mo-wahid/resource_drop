@@ -10,20 +10,7 @@ import { useRouter } from "next/navigation";
 import { RequestStatus } from "@prisma/client";
 import { Server, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { deleteResourceRequest } from "@/app/(protected)/my-requests/actions";
-import { toast } from "sonner";
-
+import { DeleteRequestButton } from "./delete-request-button";
 import { SortableTableHead, TablePagination } from "@/components/admin/table-utils";
 
 type RequestType = {
@@ -34,13 +21,7 @@ type RequestType = {
   resourceType: { name: string };
 };
 
-const statusColors: Record<RequestStatus, string> = {
-  PENDING: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  ACCEPTED: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  PROVISIONED: "bg-green-500/10 text-green-500 border-green-500/20",
-  REJECTED: "bg-red-500/10 text-red-500 border-red-500/20",
-  REVOKED: "bg-gray-500/10 text-gray-500 border-gray-500/20",
-};
+import { statusColors } from "@/lib/status-colors";
 
 export function MemberRequestsTable({
   requests,
@@ -54,23 +35,6 @@ export function MemberRequestsTable({
   totalCount: number;
 }) {
   const router = useRouter();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setDeletingId(id);
-    const result = await deleteResourceRequest(id);
-    
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Request deleted successfully");
-      router.refresh();
-    }
-    setDeletingId(null);
-  };
 
   if (totalCount === 0) {
     return (
@@ -118,44 +82,7 @@ export function MemberRequestsTable({
                 <TableCell className="text-right text-muted-foreground" suppressHydrationWarning>{formatDate(request.createdAt)}</TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   {canDelete && (
-                    <AlertDialog>
-                      <AlertDialogTrigger 
-                        render={
-                          <Button variant="ghost" size="icon-sm" className="text-destructive hover:bg-destructive/10">
-                            {deletingId === request.id ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="size-4" />
-                            )}
-                          </Button>
-                        } 
-                      />
-                      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete this resource request. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <Button 
-                            variant="destructive" 
-                            onClick={(e) => handleDelete(e, request.id)}
-                            disabled={deletingId === request.id}
-                          >
-                            {deletingId === request.id ? (
-                              <>
-                                <Loader2 className="mr-2 size-4 animate-spin" />
-                                Deleting...
-                              </>
-                            ) : (
-                              "Delete Request"
-                            )}
-                          </Button>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <DeleteRequestButton requestId={request.id} />
                   )}
                 </TableCell>
               </TableRow>

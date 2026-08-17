@@ -69,6 +69,17 @@ export async function createProject(data: CreateProjectInput) {
         });
       }
 
+      // Notify new members
+      if (memberIds && memberIds.length > 0) {
+        await tx.notification.createMany({
+          data: memberIds.map((userId) => ({
+            userId,
+            message: `You have been added to the project: ${name}`,
+            linkUrl: `/projects/${createdProject.id}`,
+          })),
+        });
+      }
+
       return createdProject;
     });
 
@@ -213,6 +224,16 @@ export async function syncProjectMembers(projectId: string, userIds: string[]) {
         }
       }
     });
+
+    if (toAdd.length > 0) {
+      await prisma.notification.createMany({
+        data: toAdd.map((userId) => ({
+          userId,
+          message: `You have been added to the project: ${project.name}`,
+          linkUrl: `/projects/${projectId}`,
+        })),
+      });
+    }
 
     revalidatePath("/admin/projects");
     revalidatePath(`/admin/projects/${projectId}`);

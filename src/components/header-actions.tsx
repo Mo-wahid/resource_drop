@@ -14,6 +14,7 @@ import {
 import { Bell, LogOut } from "lucide-react";
 import { Session } from "next-auth";
 import { signOutAction } from "@/app/(auth)/login/actions";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface HeaderActionsProps {
   session: Session | null;
@@ -34,9 +35,7 @@ export function HeaderActions({ session }: HeaderActionsProps) {
 
   return (
     <div className="flex items-center gap-2 ml-auto">
-      <Button variant="ghost" size="icon" className="text-muted-foreground relative" title="Notifications">
-        <Bell className="size-5" />
-      </Button>
+      <NotificationBell session={session} />
 
       <DropdownMenu>
         <DropdownMenuTrigger render={

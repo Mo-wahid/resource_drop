@@ -44,7 +44,7 @@ export function MemberSelectField({
 
   return (
     <div className="flex items-center gap-3">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={false}>
         <PopoverTrigger 
           className={cn(buttonVariants({ variant: "outline" }), "w-full justify-between")}
           role="combobox"

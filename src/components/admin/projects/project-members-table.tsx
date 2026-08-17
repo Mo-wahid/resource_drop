@@ -111,6 +111,7 @@ export function ProjectMembersTable({
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(memberIds);
 
   const handleSyncMembers = () => {
+    if (isPending) return;
     startTransition(async () => {
       const res = await syncProjectMembers(projectId, selectedUserIds);
       if (res.error) {
@@ -189,7 +190,10 @@ export function ProjectMembersTable({
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddOpen(false)} disabled={isPending}>Cancel</Button>
-              <Button onClick={handleSyncMembers} disabled={isPending}>
+              <Button 
+                onClick={handleSyncMembers} 
+                disabled={isPending}
+              >
                 {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Save Changes
               </Button>

@@ -35,9 +35,11 @@ const RESOURCE_TYPES = [
 export function CreateRequestForm({
   projects,
   onSuccess,
+  defaultProjectId,
 }: {
   projects: AssignedProject[];
   onSuccess?: () => void;
+  defaultProjectId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -53,7 +55,7 @@ export function CreateRequestForm({
   } = useForm<RequestFormInput>({
     resolver: zodResolver(requestFormSchema),
     defaultValues: {
-      projectId: "",
+      projectId: defaultProjectId || "",
       resourceType: "github_repo",
     } as RequestFormInput, // cast to handle the discriminated union correctly
   });

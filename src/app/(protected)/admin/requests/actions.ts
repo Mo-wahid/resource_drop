@@ -119,8 +119,20 @@ export async function addRequestComment(requestId: string, message: string) {
         },
       });
     } else if (isOwner && !isAdmin) {
-      // We don't have a specific admin to notify, maybe don't notify for now or notify all admins. 
-      // Skipping for now.
+      // Member commenting -> notify all admins
+      const admins = await prisma.user.findMany({
+        where: { role: { name: "ADMIN" } }
+      });
+      
+      if (admins.length > 0) {
+        await prisma.notification.createMany({
+          data: admins.map((admin) => ({
+            userId: admin.id,
+            requestId,
+            message: `${authResult.session.user.name || authResult.session.user.email?.split('@')[0] || "A member"} commented on their request`,
+          }))
+        });
+      }
     }
 
     revalidatePath(`/admin/requests/${requestId}`);

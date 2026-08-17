@@ -71,6 +71,25 @@ export async function createResourceRequest(data: RequestFormInput) {
         },
       });
 
+      // Notify all admins about the new request
+      const admins = await tx.user.findMany({
+        where: { role: { name: "ADMIN" } }
+      });
+
+      if (admins.length > 0) {
+        const project = await tx.project.findUnique({ where: { id: projectId } });
+        const username = authResult.session.user.name || authResult.session.user.email?.split('@')[0] || "A member";
+        const projectName = project?.name || "a project";
+        
+        await tx.notification.createMany({
+          data: admins.map((admin) => ({
+            userId: admin.id,
+            requestId: req.id,
+            message: `New resource request from ${username} for ${projectName}`,
+          }))
+        });
+      }
+
       return req;
     });
 

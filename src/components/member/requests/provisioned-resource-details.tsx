@@ -1,9 +1,24 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CheckCircle2, Copy } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Copy, Eye, EyeOff } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export function ProvisionedResourceDetails({ resource, request }: { resource: any; request: any }) {
+  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({});
+
+  const toggleVisibility = (key: string) => {
+    setVisibleFields(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
   if (request.status === "REJECTED" || request.status === "REVOKED") {
     return (
       <Card className="shadow-sm">
@@ -18,13 +33,26 @@ export function ProvisionedResourceDetails({ resource, request }: { resource: an
   }
 
   if (!resource) {
-    if (request.status === "PENDING" || request.status === "ACCEPTED") {
+    if (request.status === "PENDING") {
       return (
         <Card className="shadow-sm">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
-              <p className="text-sm font-medium">Provisioning in Progress</p>
-              <p className="text-xs mt-1">Your resource will be set up by an administrator soon.</p>
+              <p className="text-sm font-medium">Awaiting Review</p>
+              <p className="text-xs mt-1">Your request is currently awaiting admin review.</p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    if (request.status === "ACCEPTED") {
+      return (
+        <Card className="shadow-sm border-blue-500/20 bg-blue-500/5">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center justify-center py-12 text-center text-blue-600/80 border rounded-lg border-dashed border-blue-500/20">
+              <p className="text-sm font-medium text-blue-700">Provisioning in Progress</p>
+              <p className="text-xs mt-1">Your request has been accepted. An administrator will provision your resource shortly.</p>
             </div>
           </CardContent>
         </Card>
@@ -59,16 +87,45 @@ export function ProvisionedResourceDetails({ resource, request }: { resource: an
             <p className="text-sm font-medium text-green-900">Connection Details & Credentials</p>
             
             <div className="grid gap-3">
-              {Object.entries(details).map(([key, value]) => (
-                <div key={key} className="flex flex-col space-y-1.5 p-3 rounded-md bg-background border border-green-500/20">
-                  <span className="text-xs font-medium text-muted-foreground capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="text-sm font-mono break-all">{String(value)}</span>
+              {Object.entries(details).map(([key, value]) => {
+                const textValue = String(value);
+                const isVisible = visibleFields[key];
+                
+                return (
+                  <div key={key} className="flex flex-col space-y-1.5 p-3 rounded-md bg-background border border-green-500/20">
+                    <span className="text-xs font-medium text-muted-foreground capitalize">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-sm font-mono break-all">
+                        {isVisible ? textValue : '•'.repeat(Math.min(textValue.length, 32))}
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => toggleVisibility(key)}
+                          title={isVisible ? "Hide value" : "Show value"}
+                        >
+                          {isVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                          <span className="sr-only">Toggle visibility</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => copyToClipboard(textValue)}
+                          title="Copy to clipboard"
+                        >
+                          <Copy className="size-4" />
+                          <span className="sr-only">Copy</span>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : (

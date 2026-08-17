@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireRoleAction } from "@/lib/auth/guard";
-import { getProjectDetail, getEligibleMembers, getRoles } from "@/app/(protected)/admin/projects/queries";
+import { getProjectDetail, getEligibleMembers, getRoles, getProjectRequests } from "@/app/(protected)/admin/projects/queries";
+import { ProjectRequestsTable } from "@/components/projects/project-requests-table";
 import { RequirementsUpload } from "@/components/admin/projects/requirements-upload";
 import { ProjectMembersTable } from "@/components/admin/projects/project-members-table";
 import { buttonVariants } from "@/components/ui/button";
@@ -27,9 +28,10 @@ export default async function AdminProjectDetailPage({
     notFound();
   }
 
-  const [eligibleMembers, roles] = await Promise.all([
+  const [eligibleMembers, roles, projectRequests] = await Promise.all([
     getEligibleMembers(),
-    getRoles()
+    getRoles(),
+    getProjectRequests(id)
   ]);
   
   const requirementsFilename = project.documents?.[0]?.fileName || null;
@@ -82,6 +84,8 @@ export default async function AdminProjectDetailPage({
             eligibleMembers={eligibleMembers}
             roles={roles}
           />
+
+          <ProjectRequestsTable requests={projectRequests} isAdmin />
         </div>
 
         <div className="lg:col-span-1 space-y-6">

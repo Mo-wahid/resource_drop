@@ -6,14 +6,18 @@ export async function getAdminRequests(
   pageSize: number = 10,
   sortBy: string = "status",
   sortOrder: "asc" | "desc" = "asc",
-  statusFilter?: RequestStatus | "ALL"
+  statusFilter?: RequestStatus | RequestStatus[] | "ALL"
 ) {
   const where: any = {
     deletedAt: null
   };
 
   if (statusFilter && statusFilter !== "ALL") {
-    where.status = statusFilter;
+    if (Array.isArray(statusFilter)) {
+      where.status = { in: statusFilter };
+    } else {
+      where.status = statusFilter;
+    }
   }
 
   let orderBy: any = [];

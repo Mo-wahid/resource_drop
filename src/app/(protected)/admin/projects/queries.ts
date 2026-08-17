@@ -89,3 +89,14 @@ export async function getRoles() {
     orderBy: { name: "asc" },
   });
 }
+
+export async function getProjectRequests(projectId: string) {
+  return prisma.resourceRequest.findMany({
+    where: { projectId, deletedAt: null },
+    include: {
+      user: { select: { username: true, email: true } },
+      resourceType: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
