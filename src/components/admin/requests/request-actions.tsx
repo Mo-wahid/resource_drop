@@ -54,40 +54,6 @@ export function RequestActions({ request }: { request: any }) {
             <>
               <AlertDialog>
                 <AlertDialogTrigger render={
-                  <Button className="gap-2 w-full sm:w-auto">
-                    <CheckCircle2 className="size-4" />
-                    Accept Request
-                  </Button>
-                } />
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Accept Request?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will mark the request as accepted and notify the user. You can proceed with provisioning the resource.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <div className="my-4">
-                    <Textarea 
-                      placeholder="Optional notes for the user..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setNotes("")}>Cancel</AlertDialogCancel>
-                    <Button 
-                      onClick={() => handleAction("ACCEPTED")} 
-                      disabled={isPending}
-                    >
-                      {isPending && actionType === "ACCEPTED" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                      Confirm Accept
-                    </Button>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              <AlertDialog>
-                <AlertDialogTrigger render={
                   <Button variant="destructive" className="gap-2 w-full sm:w-auto">
                     <XCircle className="size-4" />
                     Reject Request
@@ -103,45 +69,6 @@ export function RequestActions({ request }: { request: any }) {
                   <div className="my-4">
                     <Textarea 
                       placeholder="Reason for rejection (recommended)..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setNotes("")}>Cancel</AlertDialogCancel>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => handleAction("REJECTED")} 
-                      disabled={isPending}
-                    >
-                      {isPending && actionType === "REJECTED" ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-                      Confirm Reject
-                    </Button>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          )}
-
-          {request.status === "ACCEPTED" && (
-            <>
-              <AlertDialog>
-                <AlertDialogTrigger render={
-                  <Button variant="destructive" className="gap-2 w-full sm:w-auto">
-                    <XCircle className="size-4" />
-                    Reject Request
-                  </Button>
-                } />
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Reject Request?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will reject the previously accepted request.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <div className="my-4">
-                    <Textarea 
-                      placeholder="Reason for rejection..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                     />

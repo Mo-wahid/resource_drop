@@ -9,7 +9,12 @@ export async function getAdminRequests(
   statusFilter?: RequestStatus | RequestStatus[] | "ALL"
 ) {
   const where: any = {
-    deletedAt: null
+    deletedAt: null,
+    project: {
+      status: {
+        notIn: ["COMPLETED", "ARCHIVED"]
+      }
+    }
   };
 
   if (statusFilter && statusFilter !== "ALL") {

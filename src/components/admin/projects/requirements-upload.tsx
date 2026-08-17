@@ -173,19 +173,19 @@ export function RequirementsUpload({
 
   if (existingFilename && !file && !isSuccess) {
     return (
-      <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-md">
+      <div className="flex items-center justify-between p-4 border rounded-lg bg-card gap-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="p-2 bg-primary/10 rounded-md shrink-0">
             <FileText className="size-5 text-primary" />
           </div>
-          <div>
-            <p className="font-medium text-sm">{existingFilename}</p>
-            <p className="text-xs text-muted-foreground">Uploaded requirements document</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-sm truncate" title={existingFilename}>{existingFilename}</p>
+            <p className="text-xs text-muted-foreground truncate">Uploaded requirements document</p>
           </div>
         </div>
         <AlertDialog>
           <AlertDialogTrigger 
-            render={<Button variant="destructive" size="sm" disabled={isRemoving} />}
+            render={<Button variant="destructive" size="sm" className="shrink-0" disabled={isRemoving} />}
           >
             {isRemoving ? <Loader2 className="size-4 mr-1.5 animate-spin" /> : <X className="size-4 mr-1.5" />}
             Remove
@@ -231,7 +231,10 @@ export function RequirementsUpload({
       <CardContent className="space-y-4">
 
       {!file && !isSuccess ? (
-        <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-md bg-muted/20 gap-3">
+        <div 
+          onClick={() => fileInputRef.current?.click()}
+          className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-md bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer gap-3 group"
+        >
           <input
             type="file"
             className="hidden"
@@ -239,13 +242,11 @@ export function RequirementsUpload({
             onChange={handleFileSelect}
             accept=".pdf,.md,.docx,application/pdf,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           />
-          <div className="p-3 bg-primary/10 rounded-full">
+          <div className="p-3 bg-primary/10 rounded-full group-hover:scale-105 transition-transform duration-200">
             <FileUp className="size-6 text-primary" />
           </div>
           <div className="text-center">
-            <Button type="button" variant="link" className="p-0 h-auto font-medium" onClick={() => fileInputRef.current?.click()}>
-              Click to upload
-            </Button>
+            <span className="text-primary font-medium hover:underline">Click to upload</span>
             <span className="text-muted-foreground text-sm"> or drag and drop</span>
           </div>
           {error && <span className="text-xs font-medium text-destructive">{error}</span>}
@@ -265,7 +266,7 @@ export function RequirementsUpload({
             {!isUploading && (
               <AlertDialog>
                 <AlertDialogTrigger 
-                  render={<Button type="button" variant="ghost" size="icon" className="size-8" disabled={isRemoving} />}
+                  render={<Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" disabled={isRemoving} />}
                 >
                   {isRemoving ? <Loader2 className="size-4 animate-spin text-muted-foreground" /> : <X className="size-4 text-muted-foreground" />}
                 </AlertDialogTrigger>

@@ -14,7 +14,7 @@ import { Users, FolderKanban, Inbox, Server } from "lucide-react";
 
 const requestColorMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: "Pending", color: "bg-yellow-500" },
-  ACCEPTED: { label: "Accepted", color: "bg-blue-500" },
+
   PROVISIONED: { label: "Provisioned", color: "bg-green-500" },
   REJECTED: { label: "Rejected", color: "bg-red-500" },
   REVOKED: { label: "Revoked", color: "bg-gray-500" },
@@ -42,10 +42,10 @@ export default async function AdminDashboardPage() {
     recentAudit,
   ] = await Promise.all([
     getAdminDashboardStats(),
-    getRecentPendingRequests(6),
+    getRecentPendingRequests(3),
     getAdminRequestStatusBreakdown(),
     getAdminProjectStatusBreakdown(),
-    getRecentAuditEntries(6),
+    getRecentAuditEntries(3),
   ]);
 
   const formattedRequestItems: StatusItem[] = requestBreakdown.map((r) => ({
@@ -96,33 +96,28 @@ export default async function AdminDashboardPage() {
           href="/admin/requests"
         />
         <StatCard
-          label="Provisioned Resources"
+          label="Resource Types"
           value={stats.provisionedResources}
           icon={Server}
           description="Active infrastructure components"
         />
       </div>
 
-      {/* Row 2: Queue & Request Status Breakdown */}
+      {/* Main Content Area */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        {/* Left Column: Tables & Lists */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
           <RecentRequestsTable requests={pendingRequests} />
+          <RecentActivityList entries={recentAudit} />
         </div>
-        <div className="lg:col-span-1">
+
+        {/* Right Column: Status Breakdown Bars */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
           <StatusBreakdownBar
             title="Request Pipeline"
             description="All-time distribution of requests"
             items={formattedRequestItems}
           />
-        </div>
-      </div>
-
-      {/* Row 3: Audit Activity & Project Lifecycle Breakdown */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RecentActivityList entries={recentAudit} />
-        </div>
-        <div className="lg:col-span-1">
           <StatusBreakdownBar
             title="Project Distribution"
             description="Projects by lifecycle phase"

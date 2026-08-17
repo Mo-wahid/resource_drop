@@ -36,9 +36,10 @@ interface MemberProjectsTableProps {
   currentPage: number;
   totalPages: number;
   totalCount: number;
+  isDashboard?: boolean;
 }
 
-export function MemberProjectsTable({ projects, currentPage, totalPages, totalCount }: MemberProjectsTableProps) {
+export function MemberProjectsTable({ projects, currentPage, totalPages, totalCount, isDashboard }: MemberProjectsTableProps) {
   const router = useRouter();
 
   if (totalCount === 0) {
@@ -60,11 +61,11 @@ export function MemberProjectsTable({ projects, currentPage, totalPages, totalCo
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead className="hidden md:table-cell">Description</TableHead>
-            <SortableTableHead columnKey="creator" title="Creator" />
+            {isDashboard ? <TableHead>Creator</TableHead> : <SortableTableHead columnKey="creator" title="Creator" />}
             <TableHead className="text-right">Members</TableHead>
-            <SortableTableHead columnKey="status" title="Status" className="text-center" />
+            {isDashboard ? <TableHead className="text-center">Status</TableHead> : <SortableTableHead columnKey="status" title="Status" className="text-center" />}
             <TableHead className="text-center">Requirements</TableHead>
-            <SortableTableHead columnKey="createdAt" title="Created" className="text-right hidden sm:table-cell" />
+            {isDashboard ? <TableHead className="text-right hidden sm:table-cell">Created</TableHead> : <SortableTableHead columnKey="createdAt" title="Created" className="text-right hidden sm:table-cell" />}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -105,11 +106,13 @@ export function MemberProjectsTable({ projects, currentPage, totalPages, totalCo
           })}
         </TableBody>
       </Table>
-      <TablePagination 
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalCount={totalCount}
-      />
+      {!isDashboard && (
+        <TablePagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+        />
+      )}
     </div>
   );
 }

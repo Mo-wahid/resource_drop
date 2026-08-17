@@ -22,9 +22,11 @@ type ProjectRequest = {
 export function ProjectRequestsTable({
   requests,
   isAdmin = false,
+  isProjectActive = true,
 }: {
   requests: ProjectRequest[];
   isAdmin?: boolean;
+  isProjectActive?: boolean;
 }) {
   const router = useRouter();
 
@@ -66,8 +68,8 @@ export function ProjectRequestsTable({
                 {requests.map((request) => (
                   <TableRow
                     key={request.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => router.push(`${basePath}/${request.id}`)}
+                    className={isProjectActive ? "cursor-pointer hover:bg-muted/50" : ""}
+                    onClick={() => isProjectActive && router.push(`${basePath}/${request.id}`)}
                   >
                     {isAdmin && request.user && (
                       <TableCell>

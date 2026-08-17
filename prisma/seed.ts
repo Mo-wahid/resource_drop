@@ -43,7 +43,7 @@ async function main() {
 
   // Create some standard users
   const members = [];
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 9; i++) {
     const member = await prisma.user.upsert({
       where: { email: `member${i}@resourcedrop.local` },
       update: {},
@@ -60,49 +60,29 @@ async function main() {
 
   // 3. Create Projects with nested Members & Documents
   console.log('Seeding Projects & Relations...');
-  const project1 = await prisma.project.upsert({
-    where: { name: 'Alpha Project' },
-    update: {},
-    create: {
-      name: 'Alpha Project',
-      description: 'The first flagship project.',
-      createdBy: admin.id,
-      status: 'ACTIVE',
-      members: {
-        create: [
-          { userId: admin.id, projectRoleId: adminRole.id },
-          { userId: members[0].id, projectRoleId: memberRole.id },
-          { userId: members[1].id, projectRoleId: viewerRole.id },
-        ],
+  const projects = [];
+  const projectStatuses = ['PLANNING', 'ACTIVE', 'COMPLETED', 'ARCHIVED'];
+  for (let i = 1; i <= 10; i++) {
+    const status = projectStatuses[i % 4];
+    const p = await prisma.project.upsert({
+      where: { name: `Project ${i}` },
+      update: {},
+      create: {
+        name: `Project ${i}`,
+        description: `Description for Project ${i}.`,
+        createdBy: admin.id,
+        status: status as any,
+        members: {
+          create: [
+            { userId: admin.id, projectRoleId: adminRole.id },
+            { userId: members[i % 9].id, projectRoleId: memberRole.id },
+            { userId: members[(i + 1) % 9].id, projectRoleId: viewerRole.id },
+          ],
+        },
       },
-      documents: {
-        create: [
-          {
-            fileName: 'alpha_architecture.pdf',
-            fileUrl: 'projects/alpha/alpha_architecture.pdf',
-            uploadedBy: admin.id,
-          },
-        ],
-      },
-    },
-  });
-
-  const project2 = await prisma.project.upsert({
-    where: { name: 'Beta Project' },
-    update: {},
-    create: {
-      name: 'Beta Project',
-      description: 'A top secret beta initiative.',
-      createdBy: admin.id,
-      status: 'PLANNING',
-      members: {
-        create: [
-          { userId: members[2].id, projectRoleId: memberRole.id },
-          { userId: members[3].id, projectRoleId: memberRole.id },
-        ],
-      },
-    },
-  });
+    });
+    projects.push(p);
+  }
 
   // 4. Create some pending Invitations
   console.log('Seeding Invitations...');
@@ -188,41 +168,25 @@ async function main() {
   // 6. Create some Resource Requests
   console.log('Seeding Resource Requests...');
   const resourceTypes = await prisma.resourceType.findMany();
-  const getResourceType = (name: string) => resourceTypes.find((rt) => rt.name === name)!;
-
-  await prisma.resourceRequest.create({
-    data: {
-      project: { connect: { id: project1.id } },
-      user: { connect: { id: members[0].id } },
-      resourceType: { connect: { id: getResourceType('github_repo').id } },
-      status: 'PENDING',
-      parameters: {},
-    },
-  });
-
-  await prisma.resourceRequest.create({
-    data: {
-      project: { connect: { id: project1.id } },
-      user: { connect: { id: admin.id } },
-      resourceType: { connect: { id: getResourceType('database').id } },
-      status: 'PROVISIONED',
-      parameters: { engine: 'postgresql' },
-    },
-  });
-
-  await prisma.resourceRequest.create({
-    data: {
-      project: { connect: { id: project2.id } },
-      user: { connect: { id: members[2].id } },
-      resourceType: { connect: { id: getResourceType('object_storage').id } },
-      status: 'REJECTED',
-      parameters: { purpose: 'Store temporary beta logs' },
-    },
-  });
+  const requestStatuses = ['PENDING', 'PROVISIONED', 'REJECTED', 'REVOKED'];
+  
+  for (let i = 1; i <= 10; i++) {
+    const status = requestStatuses[i % 4];
+    const rType = resourceTypes[i % resourceTypes.length];
+    await prisma.resourceRequest.create({
+      data: {
+        project: { connect: { id: projects[i - 1].id } },
+        user: { connect: { id: members[i % 9].id } },
+        resourceType: { connect: { id: rType.id } },
+        status: status as any,
+        parameters: { note: `Parameter for request ${i}` },
+      },
+    });
+  }
 
   console.log('Seed completed successfully!');
   console.log('Admin Login: admin@resourcedrop.local / password123');
-  console.log('Member Logins: member[1-4]@resourcedrop.local / password123');
+  console.log('Member Logins: member[1-9]@resourcedrop.local / password123');
 }
 
 main()

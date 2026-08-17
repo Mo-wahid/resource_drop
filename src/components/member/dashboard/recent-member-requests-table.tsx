@@ -30,7 +30,7 @@ export function RecentMemberRequestsTable({ requests }: { requests: MemberReques
   const router = useRouter();
 
   return (
-    <Card className="h-full flex flex-col justify-between py-0">
+    <Card className="py-0">
       <div>
         <CardHeader className="flex flex-row items-center justify-between py-3">
           <div>

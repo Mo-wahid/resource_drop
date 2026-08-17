@@ -30,7 +30,6 @@ enum DeliveryStatus {
 
 enum RequestStatus {
     PENDING
-    ACCEPTED
     PROVISIONED
     REJECTED
     REVOKED

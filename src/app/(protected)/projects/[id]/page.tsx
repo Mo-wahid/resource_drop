@@ -108,7 +108,10 @@ export default async function MemberProjectDetailPage({
           
           <MemberTeamTable members={project.members} />
 
-          <ProjectRequestsTable requests={memberRequests} />
+          <ProjectRequestsTable 
+            requests={memberRequests} 
+            isProjectActive={project.status !== "COMPLETED" && project.status !== "ARCHIVED"}
+          />
         </div>
 
         <div className="lg:col-span-1 space-y-6">

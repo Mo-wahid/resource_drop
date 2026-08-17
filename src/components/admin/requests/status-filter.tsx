@@ -40,7 +40,7 @@ export function StatusFilter() {
       <SelectContent>
         <SelectItem value="ALL">All Requests</SelectItem>
         <SelectItem value="PENDING">Pending</SelectItem>
-        <SelectItem value="ACCEPTED">Accepted</SelectItem>
+
         <SelectItem value="PROVISIONED">Provisioned</SelectItem>
         <SelectItem value="REJECTED">Rejected</SelectItem>
         <SelectItem value="REVOKED">Revoked</SelectItem>

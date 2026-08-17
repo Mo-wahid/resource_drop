@@ -131,7 +131,7 @@ export async function deleteResourceRequest(requestId: string) {
       return { error: "You don't have permission to delete this request." };
     }
 
-    if (request.status === "PROVISIONED" || request.status === "ACCEPTED") {
+    if (request.status === "PROVISIONED") {
       return { error: "Cannot delete a request that is already accepted or provisioned." };
     }
 

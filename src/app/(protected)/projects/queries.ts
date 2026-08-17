@@ -2,20 +2,21 @@ import { prisma } from "@/lib/db";
 
 export async function getMemberProjects(
   userId: string,
+  view: "active" | "inactive" = "active",
   page: number = 1,
   pageSize: number = 8,
   sortBy?: string,
   sortOrder: "asc" | "desc" = "asc"
 ) {
-  const where = {
+  const where: import("@prisma/client").Prisma.ProjectWhereInput = {
     deletedAt: null,
-    status: { not: "ARCHIVED" as const },
+    status: view === "inactive" ? { in: ["COMPLETED", "ARCHIVED"] } : { in: ["PLANNING", "ACTIVE", "PAUSED"] },
     members: {
       some: { userId }
     }
   };
 
-  let orderBy: any = { createdAt: "desc" };
+  let orderBy: import("@prisma/client").Prisma.ProjectOrderByWithRelationInput = { createdAt: "desc" };
   
   if (sortBy === "status") {
     orderBy = { status: sortOrder };

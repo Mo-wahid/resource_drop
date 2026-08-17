@@ -22,7 +22,12 @@ export async function getMemberDashboardStats(userId: string) {
       where: {
         userId,
         deletedAt: null,
-        status: { in: [RequestStatus.PENDING, RequestStatus.ACCEPTED] },
+        status: RequestStatus.PENDING,
+        project: {
+          status: {
+            notIn: ["COMPLETED", "ARCHIVED"]
+          }
+        }
       },
     }),
     // Provisioned resources tied to user's requests or projects
@@ -47,6 +52,11 @@ export async function getRecentMemberRequests(userId: string, limit: number = 5)
     where: {
       userId,
       deletedAt: null,
+      project: {
+        status: {
+          notIn: ["COMPLETED", "ARCHIVED"]
+        }
+      }
     },
     take: limit,
     orderBy: {
@@ -82,7 +92,6 @@ export async function getMemberRequestStatusBreakdown(userId: string) {
 
   const allStatuses: RequestStatus[] = [
     RequestStatus.PENDING,
-    RequestStatus.ACCEPTED,
     RequestStatus.PROVISIONED,
     RequestStatus.REJECTED,
     RequestStatus.REVOKED,

@@ -85,7 +85,11 @@ export default async function AdminProjectDetailPage({
             roles={roles}
           />
 
-          <ProjectRequestsTable requests={projectRequests} isAdmin />
+          <ProjectRequestsTable 
+            requests={projectRequests} 
+            isAdmin 
+            isProjectActive={project.status !== "COMPLETED" && project.status !== "ARCHIVED"}
+          />
         </div>
 
         <div className="lg:col-span-1 space-y-6">

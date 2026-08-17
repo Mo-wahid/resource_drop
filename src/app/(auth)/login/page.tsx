@@ -116,12 +116,7 @@ function LoginContent() {
 
               {/* Password Field */}
               <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password" className="text-sm font-semibold" required>Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                    Forgot password?
-                  </Link>
-                </div>
+                <Label htmlFor="password" className="text-sm font-semibold" required>Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                   <Input
@@ -146,6 +141,11 @@ function LoginContent() {
                 {errors.password && (
                   <p className="text-xs text-destructive">{errors.password.message}</p>
                 )}
+                <div className="flex justify-end mt-1">
+                  <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
 
               {/* Submit Button */}

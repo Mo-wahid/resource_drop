@@ -45,19 +45,7 @@ export function ProvisionedResourceDetails({ resource, request }: { resource: an
         </Card>
       );
     }
-    
-    if (request.status === "ACCEPTED") {
-      return (
-        <Card className="shadow-sm border-blue-500/20 bg-blue-500/5">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center py-12 text-center text-blue-600/80 border rounded-lg border-dashed border-blue-500/20">
-              <p className="text-sm font-medium text-blue-700">Provisioning in Progress</p>
-              <p className="text-xs mt-1">Your request has been accepted. An administrator will provision your resource shortly.</p>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
+
     
     return null;
   }

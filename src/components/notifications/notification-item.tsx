@@ -77,10 +77,10 @@ export function NotificationItem({ notification, role, onRead, onClose }: Notifi
         {!notification.isRead && (
           <button 
             onClick={handleMarkAsRead}
-            className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-primary transition-opacity"
+            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-background/80 hover:bg-muted text-muted-foreground hover:text-primary transition-all cursor-pointer shadow-sm border border-border/50"
             title="Mark as read"
           >
-            <Check className="size-4" />
+            <Check className="size-3.5" />
           </button>
         )}
       </div>

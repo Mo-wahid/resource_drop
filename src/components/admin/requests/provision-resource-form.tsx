@@ -37,7 +37,7 @@ export function ProvisionResourceForm({ request }: { request: any }) {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
-  if (request.status !== "ACCEPTED") {
+  if (request.status !== "PENDING") {
     return null;
   }
 

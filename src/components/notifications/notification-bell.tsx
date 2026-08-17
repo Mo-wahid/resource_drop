@@ -51,12 +51,14 @@ export function NotificationBell({ session }: { session: Session | null }) {
     // Initial fetch
     fetchUnreadCount();
 
-    // Poll every 30 seconds
+    // Polling disabled for now
+    /*
     const interval = setInterval(() => {
       fetchUnreadCount();
     }, 30000);
 
     return () => clearInterval(interval);
+    */
   }, [fetchUnreadCount]);
 
   useEffect(() => {
@@ -99,7 +101,7 @@ export function NotificationBell({ session }: { session: Session | null }) {
           {unreadCount > 0 && (
             <button 
               onClick={handleMarkAllAsRead}
-              className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+              className="text-xs text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer"
             >
               Mark all read
             </button>

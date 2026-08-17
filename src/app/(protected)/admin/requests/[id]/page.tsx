@@ -62,15 +62,6 @@ export default async function AdminRequestDetailPage({
           <RequestDetailCard request={request} />
           
           {request.status === "PENDING" ? (
-            <Card className="shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
-                  <p className="text-sm font-medium">Awaiting Review</p>
-                  <p className="text-xs mt-1">Accept or reject this request to proceed.</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : request.status === "ACCEPTED" ? (
             <ProvisionResourceForm request={request} />
           ) : request.status === "PROVISIONED" ? (
             <ProvisionedResourceDetails resource={request.provisionedResource} request={request} />

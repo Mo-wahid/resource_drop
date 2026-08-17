@@ -26,7 +26,7 @@ export async function getAdminDashboardStats() {
     prisma.resourceRequest.count({
       where: {
         deletedAt: null,
-        status: { in: [RequestStatus.PENDING, RequestStatus.ACCEPTED] },
+        status: RequestStatus.PENDING,
       },
     }),
     // Provisioned resources count
@@ -49,7 +49,12 @@ export async function getRecentPendingRequests(limit: number = 5) {
   return prisma.resourceRequest.findMany({
     where: {
       deletedAt: null,
-      status: { in: [RequestStatus.PENDING, RequestStatus.ACCEPTED] },
+      status: RequestStatus.PENDING,
+      project: {
+        status: {
+          notIn: ["COMPLETED", "ARCHIVED"]
+        }
+      }
     },
     take: limit,
     orderBy: [
@@ -88,7 +93,6 @@ export async function getAdminRequestStatusBreakdown() {
 
   const allStatuses: RequestStatus[] = [
     RequestStatus.PENDING,
-    RequestStatus.ACCEPTED,
     RequestStatus.PROVISIONED,
     RequestStatus.REJECTED,
     RequestStatus.REVOKED,

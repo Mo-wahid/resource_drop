@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 const requestColorMap: Record<string, { label: string; color: string }> = {
   PENDING: { label: "Pending", color: "bg-yellow-500" },
-  ACCEPTED: { label: "Accepted", color: "bg-blue-500" },
+
   PROVISIONED: { label: "Provisioned", color: "bg-green-500" },
   REJECTED: { label: "Rejected", color: "bg-red-500" },
   REVOKED: { label: "Revoked", color: "bg-gray-500" },
@@ -37,9 +37,9 @@ export default async function MemberDashboardPage() {
     projectData,
   ] = await Promise.all([
     getMemberDashboardStats(userId),
-    getRecentMemberRequests(userId, 5),
+    getRecentMemberRequests(userId, 3),
     getMemberRequestStatusBreakdown(userId),
-    getMemberProjects(userId, 1, 5),
+    getMemberProjects(userId, "active", 1, 3),
   ]);
 
   const formattedRequestItems: StatusItem[] = requestBreakdown.map((r) => ({
@@ -120,6 +120,7 @@ export default async function MemberDashboardPage() {
             currentPage={1} 
             totalPages={projectData.totalPages} 
             totalCount={projectData.totalCount} 
+            isDashboard
           />
         </div>
       </div>
