@@ -1,7 +1,5 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
 import * as argon2 from "argon2";
 
 // NextAuth v5 Module Augmentation
@@ -18,13 +16,7 @@ declare module "next-auth" {
   }
 }
 
-// Since auth.ts might run in edge/serverless, we instantiate the Prisma Client
-// with the driver adapter. Note: For production Edge environments, ensure you
-// are using Accelerate or a connection pooler if necessary.
-const connectionString = process.env.DATABASE_URL;
-const adapter = connectionString ? new PrismaPg({ connectionString }) : null;
-// Initialize prisma defensively so it can build if DATABASE_URL is missing in some steps
-const prisma = adapter ? new PrismaClient({ adapter }) : new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
