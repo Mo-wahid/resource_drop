@@ -59,6 +59,7 @@ MINIO_USE_SSL="false"
 
 # Email Configuration (Brevo)
 BREVO_API_KEY="your-brevo-api-key"
+
 EMAIL_FROM_ADDRESS="noreply@resourcedrop.com"
 
 # Cron Jobs
@@ -68,7 +69,7 @@ CRON_SECRET="your-secure-cron-secret"
 ### 4. Database Setup
 Push the Prisma schema to your local database and run the initial seed to create the default Admin account.
 
-\`\`\`bash
+\`\`\` npm run seed
 # Apply schema to DB
 npx prisma db push
 
@@ -78,9 +79,10 @@ npm run seed
 *(Check `prisma/seed.ts` for the default admin credentials generated).*
 
 ### 5. Start the Development Server
-\`\`\`bash
+\`\`\`
 npm run dev
 \`\`\`
+
 Visit \`http://localhost:3000\` in your browser to log in.
 
 ---
