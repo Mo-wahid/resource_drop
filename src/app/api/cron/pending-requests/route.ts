@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
-import { buildDailyDigestEmail } from "@/lib/email/digest-email";
+import { buildPendingRequestEmail } from "@/lib/email/digest-email";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +24,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 2. Check for pending requests
-    const pendingCount = await prisma.resourceRequest.count({
+    // 2. Fetch all pending requests with relations
+    const pendingRequests = await prisma.resourceRequest.findMany({
       where: { status: "PENDING" },
+      include: {
+        project: true,
+        user: true,
+        resourceType: true,
+      }
     });
 
-    if (pendingCount === 0) {
+    if (pendingRequests.length === 0) {
       return NextResponse.json({ message: "No pending requests. Emails skipped." }, { status: 200 });
     }
 
@@ -43,25 +48,34 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "No admins found. Emails skipped." }, { status: 200 });
     }
 
-    // 4. Send the emails concurrently
-    const emailPromises = admins.map(admin => {
-      const { subject, html } = buildDailyDigestEmail({
-        name: admin.username || "Admin",
-        pendingCount
-      });
-      
-      return sendEmail({
-        to: admin.email,
-        subject,
-        html
-      });
-    });
+    // 4. Send the emails concurrently (1 email per admin per request)
+    const emailPromises = [];
+
+    for (const req of pendingRequests) {
+      for (const admin of admins) {
+        const { subject, html } = buildPendingRequestEmail({
+          adminName: admin.username || "Admin",
+          projectName: req.project.name,
+          requesterName: req.user.username,
+          resourceTypeName: req.resourceType.name,
+          requestId: req.id,
+        });
+        
+        emailPromises.push(
+          sendEmail({
+            to: admin.email,
+            subject,
+            html
+          })
+        );
+      }
+    }
 
     // Wait for all emails to attempt sending (failures are gracefully swallowed in lib/email)
     await Promise.all(emailPromises);
 
     return NextResponse.json({ 
-      message: `Successfully notified ${admins.length} admins about ${pendingCount} pending requests.`,
+      message: `Successfully notified ${admins.length} admins about ${pendingRequests.length} pending requests (${emailPromises.length} emails total).`,
       success: true 
     }, { status: 200 });
     

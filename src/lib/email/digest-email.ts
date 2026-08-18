@@ -1,22 +1,24 @@
 import { siteConfig } from "@/config/site";
 
-interface DigestEmailParams {
-  name: string;
-  pendingCount: number;
+interface PendingRequestEmailParams {
+  adminName: string;
+  projectName: string;
+  requesterName: string;
+  resourceTypeName: string;
+  requestId: string;
 }
 
 /**
- * Build the HTML for a daily digest email.
+ * Build the HTML for a pending request reminder email.
  */
-export function buildDailyDigestEmail({ name, pendingCount }: DigestEmailParams): {
+export function buildPendingRequestEmail({ adminName, projectName, requesterName, resourceTypeName, requestId }: PendingRequestEmailParams): {
   subject: string;
   html: string;
 } {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const requestsUrl = `${appUrl}/admin/requests`;
+  const requestUrl = `${appUrl}/admin/requests/${requestId}`;
   
-  const pluralS = pendingCount === 1 ? "" : "s";
-  const subject = `Action Required: ${pendingCount} Pending Request${pluralS}`;
+  const subject = `Action Required: Pending Request for ${projectName}`;
 
   const html = `
 <!DOCTYPE html>
@@ -45,18 +47,18 @@ export function buildDailyDigestEmail({ name, pendingCount }: DigestEmailParams)
           <tr>
             <td style="padding:32px;">
               <p style="margin:0 0 16px;color:#09090b;font-size:15px;line-height:1.6;">
-                Hi <strong>${name}</strong>,
+                Hi <strong>${adminName}</strong>,
               </p>
               <p style="margin:0 0 24px;color:#3f3f46;font-size:14px;line-height:1.6;">
-                This is your daily summary from <strong>${siteConfig.nameFull}</strong>. There ${pendingCount === 1 ? 'is' : 'are'} currently <strong>${pendingCount} pending resource request${pluralS}</strong> that require your attention.
+                <strong>${requesterName}</strong> has requested access to <strong>${resourceTypeName}</strong> for the project <strong>${projectName}</strong>. This request is currently pending your approval.
               </p>
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding:8px 0 24px;">
-                    <a href="${requestsUrl}" 
+                    <a href="${requestUrl}" 
                        style="display:inline-block;padding:12px 32px;background-color:#0a4d8c;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;letter-spacing:0.01em;">
-                      Review Requests
+                      Review Request
                     </a>
                   </td>
                 </tr>
