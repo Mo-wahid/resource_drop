@@ -4,6 +4,8 @@ import { requireRole } from "@/lib/auth/guard";
 import { z } from "zod";
 import crypto from "crypto";
 
+export const dynamic = "force-dynamic";
+
 const uploadRequestSchema = z.object({
   filename: z.string().min(1),
   contentType: z.enum([

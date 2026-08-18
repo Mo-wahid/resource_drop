@@ -6,10 +6,13 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  // During Vercel build, DATABASE_URL might be undefined.
-  // We provide a dummy string so PrismaClient can be instantiated without crashing the build.
-  const connectionString = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
-  const adapter = new PrismaPg({ connectionString });
+  if (!process.env.DATABASE_URL) {
+    // During Vercel's static build phase, DATABASE_URL is undefined.
+    // Return a dummy Proxy so imports don't crash the build.
+    return new Proxy({}, { get: () => () => Promise.resolve([]) }) as unknown as PrismaClient;
+  }
+  
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   return new PrismaClient({ adapter });
 }
 
