@@ -1,6 +1,8 @@
 import { requireAuth } from "@/lib/auth/guard";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const result = await requireAuth();

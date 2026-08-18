@@ -3,6 +3,8 @@ import { requireProjectMembershipApi } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
 import { generatePresignedDownloadUrl } from "@/lib/s3";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ projectId: string }> }
