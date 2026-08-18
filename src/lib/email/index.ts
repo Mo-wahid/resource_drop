@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { BrevoClient } from "@getbrevo/brevo";
 
 interface SendEmailParams {
   to: string;
@@ -6,15 +6,15 @@ interface SendEmailParams {
   html: string;
 }
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
+const brevoApiKey = process.env.BREVO_API_KEY;
+const brevo = brevoApiKey ? new BrevoClient({ apiKey: brevoApiKey }) : null;
 
 /**
- * Send an email via Resend.
- * When RESEND_API_KEY is not configured, logs the email to the console for development.
+ * Send an email via Brevo.
+ * When BREVO_API_KEY is not configured, logs the email to the console for development.
  */
 export async function sendEmail({ to, subject, html }: SendEmailParams) {
-  if (!resend) {
+  if (!brevo) {
     // Development fallback — log to console
     console.log("\n╔══════════════════════════════════════════════════╗");
     console.log("║             📧  EMAIL (Dev Mode)                ║");
@@ -27,22 +27,19 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
     return;
   }
 
-  const fromAddress = process.env.EMAIL_FROM_ADDRESS || "onboarding@resend.dev";
+  // Fallback if not configured
+  const fromEmail = process.env.EMAIL_FROM_ADDRESS || "onboarding@resend.dev";
+  const fromName = "ResourceDrop"; // You can make this configurable too
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: fromAddress,
-      to,
+    await brevo.transactionalEmails.sendTransacEmail({
+      sender: { name: fromName, email: fromEmail },
+      to: [{ email: to }],
       subject,
-      html,
+      htmlContent: html,
     });
-
-    if (error) {
-      console.error("Resend API error:", error);
-      throw new Error(error.message);
-    }
   } catch (error) {
-    console.error("Failed to send email via Resend:", error);
+    console.error("Failed to send email via Brevo:", error);
     throw error; // Rethrow to let the caller handle the failure if needed
   }
 }
