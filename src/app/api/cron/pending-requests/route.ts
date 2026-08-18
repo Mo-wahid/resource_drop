@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { buildDailyDigestEmail } from "@/lib/email/digest-email";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   // 1. Verify authorization
   const authHeader = request.headers.get("authorization");
