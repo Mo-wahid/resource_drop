@@ -7,11 +7,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Session } from "next-auth";
 import { signOutAction } from "@/app/(auth)/login/actions";
 import { NotificationBell } from "@/components/notifications/notification-bell";

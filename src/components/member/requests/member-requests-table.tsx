@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
@@ -8,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { RequestStatus } from "@prisma/client";
-import { Server, Trash2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Server } from "lucide-react";
 import { DeleteRequestButton } from "./delete-request-button";
 import { SortableTableHead, TablePagination } from "@/components/admin/table-utils";
 

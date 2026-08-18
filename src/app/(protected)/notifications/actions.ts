@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/db";
 import { requireAuthAction } from "@/lib/auth/guard";
-import { revalidatePath } from "next/cache";
 
 export async function getUnreadCountAction() {
   const authResult = await requireAuthAction();

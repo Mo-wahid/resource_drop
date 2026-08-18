@@ -5,6 +5,7 @@ import { requireAuthAction } from "@/lib/auth/guard";
 import { revalidatePath } from "next/cache";
 import { RequestStatus } from "@prisma/client";
 import { logAuditAction } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
 
 export async function updateRequestStatus(
   requestId: string,
@@ -23,6 +24,7 @@ export async function updateRequestStatus(
   try {
     const request = await prisma.resourceRequest.findUnique({
       where: { id: requestId },
+      include: { user: true, project: true },
     });
 
     if (!request) {
@@ -69,6 +71,12 @@ export async function updateRequestStatus(
 
     await logAuditAction(authResult.session.user.id, `REQUEST_STATUS_${newStatus}`, requestId, { previousStatus: request.status, notes });
     
+    sendEmail({
+      to: request.user.email,
+      subject: `Resource Request Status Update - ${newStatus}`,
+      html: `<p>Hi ${request.user.username},</p><p>The status of your resource request for <strong>${request.project.name}</strong> has been updated to <strong>${newStatus}</strong>.</p><p>Notes: ${notes || "None"}</p><p>Please log in to your dashboard to see more details.</p>`
+    });
+
     return { success: true };
   } catch (error) {
     console.error("Failed to update request status:", error);
@@ -164,7 +172,7 @@ export async function provisionRequestAction(
   try {
     const request = await prisma.resourceRequest.findUnique({
       where: { id: requestId },
-      include: { project: true }
+      include: { project: true, user: true }
     });
 
     if (!request) {
@@ -223,6 +231,12 @@ export async function provisionRequestAction(
     revalidatePath(`/projects/${request.projectId}`);
     
     await logAuditAction(authResult.session.user.id, "REQUEST_PROVISION", requestId, { vaultReference: data.vaultReference });
+
+    sendEmail({
+      to: request.user.email,
+      subject: `Resource Provisioned - ${request.project.name}`,
+      html: `<p>Hi ${request.user.username},</p><p>Your resource request for <strong>${request.project.name}</strong> has been successfully provisioned!</p><p>Please log in to your dashboard to access the connection details.</p>`
+    });
 
     return { success: true };
   } catch (error) {

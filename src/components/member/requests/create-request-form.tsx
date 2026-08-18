@@ -14,7 +14,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Loader2, GitBranch, HardDrive, Key, Database, FolderGit2, Send } from "lucide-react";
 import { useRouter } from "next/navigation";

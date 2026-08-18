@@ -1,4 +1,4 @@
-import { Project, User } from "@prisma/client";
+import { Project } from "@prisma/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, User as UserIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -17,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { updateRequestStatus } from "@/app/(protected)/admin/requests/actions";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, Play, Ban, Loader2 } from "lucide-react";
+import { XCircle, Ban, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 

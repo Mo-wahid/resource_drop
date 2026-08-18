@@ -40,6 +40,6 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
     });
   } catch (error) {
     console.error("Failed to send email via Brevo:", error);
-    throw error; // Rethrow to let the caller handle the failure if needed
+    // Intentionally swallowed so email failures don't block critical app actions.
   }
 }

@@ -3,10 +3,8 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -22,16 +20,11 @@ import {
   FolderKanban, 
   Users, 
   Inbox, 
-  History, 
-  LogOut, 
-  Settings,
+  History,
 } from "lucide-react";
 import { ResourceDropLogo } from "./icons/resource-drop-logo";
 import { siteConfig } from "@/config/site";
 import { Session } from "next-auth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { signOutAction } from "@/app/(auth)/login/actions";
 
 interface AppSidebarProps {
   session: Session | null;

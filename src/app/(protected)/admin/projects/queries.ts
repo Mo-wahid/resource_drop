@@ -86,6 +86,9 @@ export async function getEligibleMembers() {
 
 export async function getRoles() {
   return prisma.role.findMany({
+    where: {
+      name: { not: "ADMIN" }
+    },
     orderBy: { name: "asc" },
   });
 }

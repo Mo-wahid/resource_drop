@@ -93,6 +93,12 @@ export function AuditLogTable({
           return <span>Requested <span className="font-medium text-foreground">{details.resourceType}</span></span>;
         case "REQUEST_PROVISION":
           return <span>Provisioned {details.vaultReference ? "with vault reference" : "without vault reference"}</span>;
+        case "AUTH_LOGIN_SUCCESS":
+          return <span>Logged in successfully</span>;
+        case "AUTH_LOGIN_FAILED":
+          return <span>Failed login attempt for <span className="font-medium text-foreground">{details?.email || "unknown"}</span></span>;
+        case "AUTH_LOGOUT":
+          return <span>Logged out</span>;
         default:
           if (action.startsWith("REQUEST_STATUS_")) {
              return <span>Status changed from <span className="font-medium text-foreground">{details.previousStatus}</span></span>;

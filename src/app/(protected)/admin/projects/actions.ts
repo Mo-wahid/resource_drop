@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Prisma, Project } from "@prisma/client";
 import { deleteObject } from "@/lib/s3";
 import { logAuditAction } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
 
 type ProjectStatus = Project["status"];
 
@@ -240,6 +241,19 @@ export async function syncProjectMembers(projectId: string, userIds: string[]) {
           linkUrl: `/projects/${projectId}`,
         })),
       });
+
+      const addedUsers = await prisma.user.findMany({
+        where: { id: { in: toAdd } },
+        select: { email: true, username: true }
+      });
+
+      addedUsers.forEach(user => {
+        sendEmail({
+          to: user.email,
+          subject: `Added to Project: ${project.name}`,
+          html: `<p>Hi ${user.username},</p><p>You have been added to the project <strong>${project.name}</strong>.</p><p>Log in to your dashboard to view the project details and collaborate.</p>`
+        });
+      });
     }
 
     await logAuditAction(authResult.session.user.id, "PROJECT_MEMBER_SYNC", projectId, { added: toAdd.length, removed: toRemove.length });
@@ -287,6 +301,11 @@ export async function updateProjectMemberRole(projectId: string, userId: string,
   const authResult = await requireRoleAction("ADMIN");
   if ("error" in authResult) {
     return { error: authResult.error || "Unauthorized" };
+  }
+
+  const role = await prisma.role.findUnique({ where: { id: roleId } });
+  if (role?.name === "ADMIN") {
+    return { error: "Cannot assign the global ADMIN role as a project member role." };
   }
 
   await prisma.project.update({

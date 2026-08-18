@@ -1,16 +1,52 @@
 import { prisma } from "@/lib/db";
 
-export async function getAuditLogs(
-  page: number = 1,
-  pageSize: number = 15,
-  sortBy: string = "createdAt",
-  sortOrder: "asc" | "desc" = "desc",
-  actionFilter?: string
-) {
+export interface AuditLogFilters {
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  actionFilter?: string;
+  actorId?: string;
+  targetId?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export async function getAuditLogs(filters: AuditLogFilters = {}) {
+  const {
+    page = 1,
+    pageSize = 15,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+    actionFilter,
+    actorId,
+    targetId,
+    startDate,
+    endDate
+  } = filters;
+
   const where: any = {};
 
   if (actionFilter && actionFilter !== "ALL") {
     where.action = { startsWith: actionFilter };
+  }
+  
+  if (actorId) {
+    where.actorId = actorId;
+  }
+  
+  if (targetId) {
+    where.targetId = targetId;
+  }
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) where.createdAt.gte = new Date(startDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
   }
 
   let orderBy: any = { createdAt: sortOrder };

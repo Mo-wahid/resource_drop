@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { generatePresignedUploadUrl } from "@/lib/s3";
 import { requireRole } from "@/lib/auth/guard";
-import { prisma } from "@/lib/db";
 import { z } from "zod";
 import crypto from "crypto";
 

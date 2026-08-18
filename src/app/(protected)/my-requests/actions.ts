@@ -5,6 +5,7 @@ import { requireAuthAction } from "@/lib/auth/guard";
 import { requestFormSchema, type RequestFormInput } from "@/lib/validation/request";
 import { revalidatePath } from "next/cache";
 import { logAuditAction } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
 
 export async function createResourceRequest(data: RequestFormInput) {
   const authResult = await requireAuthAction();
@@ -52,7 +53,7 @@ export async function createResourceRequest(data: RequestFormInput) {
     // Extract type-specific parameters safely without `projectId` or `resourceType`
     const { projectId, resourceType: _rt, ...params } = validData;
 
-    const request = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const req = await tx.resourceRequest.create({
         data: {
           projectId,
@@ -89,17 +90,28 @@ export async function createResourceRequest(data: RequestFormInput) {
             message: `New resource request from ${username} for ${projectName}`,
           }))
         });
+
+        return { req, admins, username, projectName };
       }
 
-      return req;
+      return { req, admins: [], username: "", projectName: "" };
     });
 
     revalidatePath("/my-requests");
     revalidatePath(`/projects/${projectId}`);
     
-    await logAuditAction(userId, "REQUEST_CREATE", request.id, { projectId, resourceType: resourceType.name });
+    await logAuditAction(userId, "REQUEST_CREATE", result.req.id, { projectId, resourceType: resourceType.name });
 
-    return { success: true, requestId: request.id };
+    // Send emails async
+    result.admins.forEach(admin => {
+      sendEmail({
+        to: admin.email,
+        subject: `New Resource Request for ${result.projectName}`,
+        html: `<p><strong>${result.username}</strong> has submitted a new resource request for the project <strong>${result.projectName}</strong>.</p><p>Please log in to the admin dashboard to review.</p>`
+      });
+    });
+
+    return { success: true, requestId: result.req.id };
   } catch (error) {
     console.error("Failed to create resource request:", error);
     return { error: "Failed to create resource request" };

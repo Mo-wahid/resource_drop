@@ -5,7 +5,6 @@ import { RequestDetailCard } from "@/components/admin/requests/request-detail-ca
 import { RequestTimeline } from "@/components/admin/requests/request-timeline";
 import { RequestComments } from "@/components/admin/requests/request-comments";
 import { ProvisionedResourceDetails } from "@/components/member/requests/provisioned-resource-details";
-import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";

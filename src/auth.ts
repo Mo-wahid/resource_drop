@@ -1,4 +1,4 @@
-import NextAuth, { DefaultSession, User as NextAuthUser } from "next-auth";
+import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
