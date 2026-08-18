@@ -74,7 +74,7 @@ async function main() {
         status: status as any,
         members: {
           create: [
-            { userId: admin.id, projectRoleId: adminRole.id },
+            { userId: admin.id, projectRoleId: memberRole.id },
             { userId: members[i % 9].id, projectRoleId: memberRole.id },
             { userId: members[(i + 1) % 9].id, projectRoleId: viewerRole.id },
           ],

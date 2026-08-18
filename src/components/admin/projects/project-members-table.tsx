@@ -64,7 +64,9 @@ function MemberRow({
           disabled={isPending || !isProjectActive}
         >
           <SelectTrigger className="w-[140px] h-8 text-xs border-transparent hover:border-border transition-colors">
-            <SelectValue />
+            <SelectValue>
+              {roles.find(r => r.id === roleId)?.name.replace('_', ' ')}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {roles.map((role) => (

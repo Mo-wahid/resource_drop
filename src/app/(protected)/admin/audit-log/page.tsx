@@ -38,7 +38,7 @@ export default async function AdminAuditLogPage({
         <AuditActionFilter />
       </div>
 
-      <div key={`${currentPage}-${currentSortBy}-${currentSortOrder}`} className="animate-in fade-in duration-300">
+      <div className="animate-in fade-in duration-300">
         <AuditLogTable
           logs={logs}
           currentPage={currentPage}
