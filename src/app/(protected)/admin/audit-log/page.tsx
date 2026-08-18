@@ -1,6 +1,7 @@
 import { requireRoleAction } from "@/lib/auth/guard";
 import { getAuditLogs } from "./queries";
 import { AuditLogTable } from "@/components/admin/audit-log/audit-log-table";
+import { AuditActionFilter } from "@/components/admin/audit-log/audit-action-filter";
 
 export default async function AdminAuditLogPage({
   searchParams,
@@ -27,11 +28,14 @@ export default async function AdminAuditLogPage({
 
   return (
     <div className="p-8 max-w-7xl mx-auto flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Audit Log</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Comprehensive record of security events, administrative updates, and user activities.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Audit Log</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Comprehensive record of security events, administrative updates, and user activities.
+          </p>
+        </div>
+        <AuditActionFilter />
       </div>
 
       <div key={`${currentPage}-${currentSortBy}-${currentSortOrder}`} className="animate-in fade-in duration-300">

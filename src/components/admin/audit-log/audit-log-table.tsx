@@ -62,6 +62,52 @@ export function AuditLogTable({
     );
   }
 
+  const formatAuditDetails = (action: string, details: any) => {
+    if (!details) return <span className="text-xs text-muted-foreground/60 italic">—</span>;
+    
+    try {
+      switch (action) {
+        case "USER_INVITE":
+          return <span>Invited <span className="font-medium text-foreground">{details.email}</span> as {details.role}</span>;
+        case "USER_DELETE":
+          return <span>Deleted user <span className="font-medium text-foreground">{details.username || details.email}</span></span>;
+        case "INVITATION_REVOKE":
+          return <span>Revoked invite for <span className="font-medium text-foreground">{details.email}</span></span>;
+        case "INVITATION_RESEND":
+          return <span>Resent invite to <span className="font-medium text-foreground">{details.email}</span></span>;
+        case "PROJECT_CREATE":
+          return <span>Created project <span className="font-medium text-foreground">{details.name}</span></span>;
+        case "PROJECT_UPDATE":
+          return <span>Updated project status to <span className="font-medium text-foreground">{details.status}</span></span>;
+        case "PROJECT_DELETE":
+          return <span>Archived project</span>;
+        case "PROJECT_DOC_UPLOAD":
+          return <span>Uploaded <span className="font-medium text-foreground">{details.fileName}</span></span>;
+        case "PROJECT_MEMBER_SYNC":
+          return <span>Added {details.added}, removed {details.removed} members</span>;
+        case "PROJECT_MEMBER_REMOVE":
+          return <span>Removed member <span className="font-medium text-foreground text-xs">{String(details.removedUserId).substring(0, 8)}...</span></span>;
+        case "PROJECT_MEMBER_UPDATE":
+          return <span>Updated member role</span>;
+        case "REQUEST_CREATE":
+          return <span>Requested <span className="font-medium text-foreground">{details.resourceType}</span></span>;
+        case "REQUEST_PROVISION":
+          return <span>Provisioned {details.vaultReference ? "with vault reference" : "without vault reference"}</span>;
+        default:
+          if (action.startsWith("REQUEST_STATUS_")) {
+             return <span>Status changed from <span className="font-medium text-foreground">{details.previousStatus}</span></span>;
+          }
+          return (
+            <span className="font-mono text-muted-foreground truncate block max-w-xs" title={JSON.stringify(details)}>
+              {JSON.stringify(details)}
+            </span>
+          );
+      }
+    } catch (e) {
+      return <span className="font-mono text-muted-foreground truncate block max-w-xs">{JSON.stringify(details)}</span>;
+    }
+  };
+
   return (
     <div className="rounded-md border border-border bg-card">
       <Table>
@@ -93,18 +139,12 @@ export function AuditLogTable({
                   {log.action.replace(/_/g, " ")}
                 </Badge>
               </TableCell>
-              <TableCell className="max-w-xs">
-                {log.details ? (
-                  <span className="text-muted-foreground font-mono truncate block" title={JSON.stringify(log.details)}>
-                    {JSON.stringify(log.details)}
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground/60 italic">—</span>
-                )}
+              <TableCell className="text-sm">
+                {formatAuditDetails(log.action, log.details)}
               </TableCell>
               <TableCell>
-                <span className="font-mono text-muted-foreground truncate block max-w-[120px]" title={log.targetId}>
-                  {log.targetId}
+                <span className="font-mono text-xs text-muted-foreground block" title={log.targetId}>
+                  {log.targetId.length > 13 ? `${log.targetId.substring(0, 8)}...` : log.targetId}
                 </span>
               </TableCell>
               <TableCell className="text-right text-muted-foreground" suppressHydrationWarning>

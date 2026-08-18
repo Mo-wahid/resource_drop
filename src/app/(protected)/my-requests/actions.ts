@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAuthAction } from "@/lib/auth/guard";
 import { requestFormSchema, type RequestFormInput } from "@/lib/validation/request";
 import { revalidatePath } from "next/cache";
+import { logAuditAction } from "@/lib/audit";
 
 export async function createResourceRequest(data: RequestFormInput) {
   const authResult = await requireAuthAction();
@@ -95,6 +96,9 @@ export async function createResourceRequest(data: RequestFormInput) {
 
     revalidatePath("/my-requests");
     revalidatePath(`/projects/${projectId}`);
+    
+    await logAuditAction(userId, "REQUEST_CREATE", request.id, { projectId, resourceType: resourceType.name });
+
     return { success: true, requestId: request.id };
   } catch (error) {
     console.error("Failed to create resource request:", error);
@@ -138,6 +142,8 @@ export async function deleteResourceRequest(requestId: string) {
     await prisma.resourceRequest.delete({
       where: { id: requestId },
     });
+
+    await logAuditAction(authResult.session.user.id, "REQUEST_DELETE", requestId);
 
     revalidatePath("/my-requests");
     return { success: true };

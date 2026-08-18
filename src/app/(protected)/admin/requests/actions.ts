@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAuthAction } from "@/lib/auth/guard";
 import { revalidatePath } from "next/cache";
 import { RequestStatus } from "@prisma/client";
+import { logAuditAction } from "@/lib/audit";
 
 export async function updateRequestStatus(
   requestId: string,
@@ -65,6 +66,8 @@ export async function updateRequestStatus(
     revalidatePath(`/admin/requests/${requestId}`);
     revalidatePath("/my-requests");
     revalidatePath(`/requests/${requestId}`);
+
+    await logAuditAction(authResult.session.user.id, `REQUEST_STATUS_${newStatus}`, requestId, { previousStatus: request.status, notes });
     
     return { success: true };
   } catch (error) {
@@ -219,6 +222,8 @@ export async function provisionRequestAction(
     revalidatePath(`/requests/${requestId}`);
     revalidatePath(`/projects/${request.projectId}`);
     
+    await logAuditAction(authResult.session.user.id, "REQUEST_PROVISION", requestId, { vaultReference: data.vaultReference });
+
     return { success: true };
   } catch (error) {
     console.error("Failed to provision request:", error);

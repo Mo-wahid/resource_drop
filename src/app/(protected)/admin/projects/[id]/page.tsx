@@ -83,6 +83,7 @@ export default async function AdminProjectDetailPage({
             members={project.members}
             eligibleMembers={eligibleMembers}
             roles={roles}
+            isProjectActive={project.status !== "COMPLETED" && project.status !== "ARCHIVED"}
           />
 
           <ProjectRequestsTable 
@@ -96,6 +97,7 @@ export default async function AdminProjectDetailPage({
           <RequirementsUpload 
             projectId={project.id}
             existingFilename={requirementsFilename}
+            isProjectActive={project.status !== "COMPLETED" && project.status !== "ARCHIVED"}
           />
         </div>
       </div>

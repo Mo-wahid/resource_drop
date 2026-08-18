@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/email";
 import { buildInviteEmail } from "@/lib/email/invite-email";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logAuditAction } from "@/lib/audit";
 
 /**
  * Create an invitation and send the invite email.
@@ -54,7 +55,7 @@ export async function createInvitation(data: InviteFormInput) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   // 6. Transaction: create/update user + revoke old invitations + create new invitation
-  await prisma.$transaction(async (tx) => {
+  const targetUserId = await prisma.$transaction(async (tx) => {
     // Revoke any existing PENDING invitations for this email
     await tx.invitation.updateMany({
       where: { email, status: "PENDING" },
@@ -62,6 +63,7 @@ export async function createInvitation(data: InviteFormInput) {
     });
 
     // Create or update the INVITED user
+    let finalUserId = existingUser?.id;
     if (existingUser) {
       // Re-inviting an existing INVITED user or a soft-deleted user
       await tx.user.update({
@@ -74,7 +76,7 @@ export async function createInvitation(data: InviteFormInput) {
       });
     } else {
       // Brand new invitation
-      await tx.user.create({
+      const newUser = await tx.user.create({
         data: {
           email,
           username: email, // Placeholder until they register
@@ -83,6 +85,7 @@ export async function createInvitation(data: InviteFormInput) {
           accountStatus: "INVITED",
         },
       });
+      finalUserId = newUser.id;
     }
 
     // Create the invitation record with the token hash
@@ -96,6 +99,8 @@ export async function createInvitation(data: InviteFormInput) {
         expiresAt,
       },
     });
+
+    return finalUserId!;
   });
 
   // 7. Send the invitation email (outside transaction — email failure shouldn't roll back DB)
@@ -112,6 +117,8 @@ export async function createInvitation(data: InviteFormInput) {
     console.error("Failed to send invitation email:", err);
     // Don't return error — invitation was created successfully, email can be resent
   }
+
+  await logAuditAction(authResult.session.user.id, "USER_INVITE", targetUserId, { email, role });
 
   revalidatePath("/admin/users");
   return { success: true };
@@ -153,6 +160,8 @@ export async function revokeInvitation(invitationId: string) {
       },
     });
   });
+
+  await logAuditAction(authResult.session.user.id, "INVITATION_REVOKE", invitationId, { email: invitation.email });
 
   revalidatePath("/admin/users");
   return { success: true };
@@ -222,6 +231,8 @@ export async function resendInvitation(invitationId: string) {
     console.error("Failed to send invitation email:", err);
   }
 
+  await logAuditAction(authResult.session.user.id, "INVITATION_RESEND", invitationId, { email: oldInvitation.email });
+
   revalidatePath("/admin/users");
   return { success: true };
 }
@@ -258,6 +269,8 @@ export async function deleteUser(userId: string) {
     where: { id: userId },
     data: { deletedAt: new Date(), accountStatus: "SUSPENDED" }, // Optionally set status
   });
+
+  await logAuditAction(authResult.session.user.id, "USER_DELETE", userId, { username: user.username, email: user.email });
 
   revalidatePath("/admin/users");
   return { success: true };

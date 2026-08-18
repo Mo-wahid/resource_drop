@@ -10,7 +10,7 @@ export async function getAuditLogs(
   const where: any = {};
 
   if (actionFilter && actionFilter !== "ALL") {
-    where.action = actionFilter;
+    where.action = { startsWith: actionFilter };
   }
 
   let orderBy: any = { createdAt: sortOrder };

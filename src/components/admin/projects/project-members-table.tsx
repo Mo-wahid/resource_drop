@@ -35,12 +35,14 @@ function MemberRow({
   member, 
   roles, 
   isPending, 
+  isProjectActive,
   onRoleChange, 
   onRemove 
 }: { 
-  member: Member, 
+  member: Member,
   roles: Role[], 
   isPending: boolean,
+  isProjectActive: boolean,
   onRoleChange: (userId: string, roleId: string) => void,
   onRemove: (userId: string, username: string) => void
 }) {
@@ -59,17 +61,15 @@ function MemberRow({
             setRoleId(val);
             onRoleChange(member.user.id, val);
           }}
-          disabled={isPending}
+          disabled={isPending || !isProjectActive}
         >
-          <SelectTrigger className="h-8 w-[160px]">
-            <span className="flex flex-1 text-left text-sm">
-              {roles.find(r => r.id === roleId)?.name.replace('_', ' ') || ""}
-            </span>
+          <SelectTrigger className="w-[140px] h-8 text-xs border-transparent hover:border-border transition-colors">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {roles.map(r => (
-              <SelectItem key={r.id} value={r.id}>
-                {r.name.replace('_', ' ')}
+            {roles.map((role) => (
+              <SelectItem key={role.id} value={role.id}>
+                {role.name.replace('_', ' ')}
               </SelectItem>
             ))}
           </SelectContent>
@@ -77,16 +77,18 @@ function MemberRow({
       </TableCell>
       <TableCell suppressHydrationWarning>{formatDate(member.assignedAt)}</TableCell>
       <TableCell className="text-right">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive" 
-          disabled={isPending}
-          onClick={() => onRemove(member.user.id, member.user.username)}
-        >
-          <Trash2 className="size-4" />
-          <span className="sr-only">Remove</span>
-        </Button>
+        {isProjectActive && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive" 
+            disabled={isPending}
+            onClick={() => onRemove(member.user.id, member.user.username)}
+          >
+            <Trash2 className="size-4" />
+            <span className="sr-only">Remove</span>
+          </Button>
+        )}
       </TableCell>
     </TableRow>
   );
@@ -96,12 +98,14 @@ export function ProjectMembersTable({
   projectId,
   members,
   eligibleMembers,
-  roles
+  roles,
+  isProjectActive = true,
 }: {
   projectId: string;
   members: Member[];
   eligibleMembers: EligibleMember[];
   roles: Role[];
+  isProjectActive?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -158,48 +162,50 @@ export function ProjectMembersTable({
           </CardTitle>
           <CardDescription className="mt-1">People with access to this project</CardDescription>
         </div>
-        <Dialog 
-          open={isAddOpen} 
-          onOpenChange={(open) => {
-            if (open) setSelectedUserIds(members.map(m => m.user.id));
-            setIsAddOpen(open);
-          }}
-        >
-          <DialogTrigger render={
-            <Button variant="outline" size="sm" className="h-8">
-              <UserPlus className="mr-2 size-3.5" />
-              Manage Members
-            </Button>
-          } />
-          <DialogContent className="overflow-visible">
-            <DialogHeader>
-              <DialogTitle>Manage Project Members</DialogTitle>
-              <DialogDescription>
-                Select members to add to the project. Unselecting an existing member will remove them.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Team Members</label>
-                <MemberSelectField 
-                  eligibleMembers={eligibleMembers}
-                  selectedIds={selectedUserIds}
-                  onChange={setSelectedUserIds}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddOpen(false)} disabled={isPending}>Cancel</Button>
-              <Button 
-                onClick={handleSyncMembers} 
-                disabled={isPending}
-              >
-                {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Save Changes
+        {isProjectActive && (
+          <Dialog 
+            open={isAddOpen} 
+            onOpenChange={(open) => {
+              if (open) setSelectedUserIds(members.map(m => m.user.id));
+              setIsAddOpen(open);
+            }}
+          >
+            <DialogTrigger render={
+              <Button variant="outline" size="sm" className="h-8">
+                <UserPlus className="mr-2 size-3.5" />
+                Manage Members
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            } />
+            <DialogContent className="overflow-visible">
+              <DialogHeader>
+                <DialogTitle>Manage Project Members</DialogTitle>
+                <DialogDescription>
+                  Select members to add to the project. Unselecting an existing member will remove them.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Team Members</label>
+                  <MemberSelectField 
+                    eligibleMembers={eligibleMembers}
+                    selectedIds={selectedUserIds}
+                    onChange={setSelectedUserIds}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddOpen(false)} disabled={isPending}>Cancel</Button>
+                <Button 
+                  onClick={handleSyncMembers} 
+                  disabled={isPending}
+                >
+                  {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         <div className="rounded-md border border-border">
@@ -227,6 +233,7 @@ export function ProjectMembersTable({
                     member={member} 
                     roles={roles} 
                     isPending={isPending} 
+                    isProjectActive={isProjectActive}
                     onRoleChange={handleRoleChange} 
                     onRemove={handleRemoveMember} 
                   />

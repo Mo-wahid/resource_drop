@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma, Project } from "@prisma/client";
 import { deleteObject } from "@/lib/s3";
+import { logAuditAction } from "@/lib/audit";
 
 type ProjectStatus = Project["status"];
 
@@ -83,6 +84,8 @@ export async function createProject(data: CreateProjectInput) {
       return createdProject;
     });
 
+    await logAuditAction(authResult.session!.user.id, "PROJECT_CREATE", project.id, { name: project.name });
+
     revalidatePath("/admin/projects");
     return { success: true, projectId: project.id };
   } catch (error) {
@@ -148,6 +151,8 @@ export async function confirmRequirementsUpload(projectId: string, objectKey: st
     if (key) await deleteObject(key);
   }
 
+  await logAuditAction(authResult.session.user.id, "PROJECT_DOC_UPLOAD", projectId, { fileName: originalFilename });
+
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
   return { success: true };
@@ -159,7 +164,7 @@ export async function confirmRequirementsUpload(projectId: string, objectKey: st
  */
 export async function removeRequirementsDocument(projectId: string) {
   const authResult = await requireRoleAction("ADMIN");
-  if ("error" in authResult) {
+  if ("error" in authResult || !authResult.session) {
     return { error: authResult.error || "Unauthorized" };
   }
 
@@ -175,6 +180,8 @@ export async function removeRequirementsDocument(projectId: string) {
   for (const doc of documents) {
     if (doc.fileUrl) await deleteObject(doc.fileUrl);
   }
+
+  await logAuditAction(authResult.session.user.id, "PROJECT_DOC_REMOVE", projectId);
 
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
@@ -235,6 +242,8 @@ export async function syncProjectMembers(projectId: string, userIds: string[]) {
       });
     }
 
+    await logAuditAction(authResult.session.user.id, "PROJECT_MEMBER_SYNC", projectId, { added: toAdd.length, removed: toRemove.length });
+
     revalidatePath("/admin/projects");
     revalidatePath(`/admin/projects/${projectId}`);
     return { success: true };
@@ -264,6 +273,8 @@ export async function removeProjectMember(projectId: string, userId: string) {
     }
   });
 
+  await logAuditAction(authResult.session.user.id, "PROJECT_MEMBER_REMOVE", projectId, { removedUserId: userId });
+
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
   return { success: true };
@@ -289,6 +300,8 @@ export async function updateProjectMemberRole(projectId: string, userId: string,
       }
     }
   });
+
+  await logAuditAction(authResult.session.user.id, "PROJECT_MEMBER_UPDATE", projectId, { updatedUserId: userId, newRoleId: roleId });
 
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
@@ -319,6 +332,8 @@ export async function archiveProject(projectId: string) {
       deletedAt: new Date()
     },
   });
+
+  await logAuditAction(authResult.session.user.id, "PROJECT_DELETE", projectId, { status: "ARCHIVED" });
 
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
@@ -352,6 +367,8 @@ export async function updateProjectStatus(projectId: string, newStatus: ProjectS
       deletedAt
     },
   });
+
+  await logAuditAction(authResult.session.user.id, "PROJECT_UPDATE", projectId, { status: newStatus });
 
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);

@@ -29,9 +29,11 @@ const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 export function RequirementsUpload({
   projectId,
   existingFilename,
+  isProjectActive = true,
 }: {
   projectId: string;
   existingFilename?: string | null;
+  isProjectActive?: boolean;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -183,28 +185,30 @@ export function RequirementsUpload({
             <p className="text-xs text-muted-foreground truncate">Uploaded requirements document</p>
           </div>
         </div>
-        <AlertDialog>
-          <AlertDialogTrigger 
-            render={<Button variant="destructive" size="sm" className="shrink-0" disabled={isRemoving} />}
-          >
-            {isRemoving ? <Loader2 className="size-4 mr-1.5 animate-spin" /> : <X className="size-4 mr-1.5" />}
-            Remove
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Remove requirements document?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. The document will be permanently removed from this project.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleRemove} variant="destructive">
-                Remove Document
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {isProjectActive && (
+          <AlertDialog>
+            <AlertDialogTrigger 
+              render={<Button variant="destructive" size="sm" className="shrink-0" disabled={isRemoving} />}
+            >
+              {isRemoving ? <Loader2 className="size-4 mr-1.5 animate-spin" /> : <X className="size-4 mr-1.5" />}
+              Remove
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove requirements document?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. The document will be permanently removed from this project.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRemove} variant="destructive">
+                  Remove Document
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     );
   }
@@ -213,11 +217,11 @@ export function RequirementsUpload({
     <Card 
       className={cn(
         "transition-colors duration-200 min-w-0 w-full",
-        isDragging ? "border-primary bg-primary/5 border-dashed" : ""
+        isDragging && isProjectActive ? "border-primary bg-primary/5 border-dashed" : ""
       )}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      onDragOver={isProjectActive ? onDragOver : undefined}
+      onDragLeave={isProjectActive ? onDragLeave : undefined}
+      onDrop={isProjectActive ? onDrop : undefined}
     >
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
@@ -230,7 +234,15 @@ export function RequirementsUpload({
       </CardHeader>
       <CardContent className="space-y-4">
 
-      {!file && !isSuccess ? (
+      {!isProjectActive && !existingFilename ? (
+        <div className="flex flex-col items-center justify-center p-6 border rounded-md bg-muted/20 text-center gap-3">
+          <FileText className="size-8 text-muted-foreground/50" />
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">No Requirements Uploaded</p>
+            <p className="text-xs text-muted-foreground">This project is inactive, so new documents cannot be uploaded.</p>
+          </div>
+        </div>
+      ) : !file && !isSuccess ? (
         <div 
           onClick={() => fileInputRef.current?.click()}
           className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-md bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer gap-3 group"
