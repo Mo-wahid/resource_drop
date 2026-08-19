@@ -96,7 +96,7 @@ export default async function AdminDashboardPage() {
           href="/admin/requests"
         />
         <StatCard
-          label="Resource Types"
+          label="Provisioned Resources"
           value={stats.provisionedResources}
           icon={Server}
           description="Active infrastructure components"
