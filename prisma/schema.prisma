@@ -283,13 +283,13 @@ model RequestStatusHistory {
 model AuditLog {
     id        String   @id @default(uuid()) @db.Uuid
     action    String
-    actorId   String   @db.Uuid
-    targetId  String   @db.Uuid
+    actorId   String?  @db.Uuid
+    targetId  String?  @db.Uuid
     details   Json?
     createdAt DateTime @default(now())
 
     // Relations
-    actor User @relation("AuditActor", fields: [actorId], references: [id])
+    actor User? @relation("AuditActor", fields: [actorId], references: [id])
 
     @@index([actorId])
     @@index([targetId])

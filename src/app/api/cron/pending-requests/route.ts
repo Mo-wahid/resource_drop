@@ -35,6 +35,12 @@ export async function GET(request: Request) {
     });
 
     if (pendingRequests.length === 0) {
+      await prisma.auditLog.create({
+        data: {
+          action: "CRON_PENDING_REQUESTS",
+          details: { message: "No pending requests. Emails skipped." },
+        }
+      });
       return NextResponse.json({ message: "No pending requests. Emails skipped." }, { status: 200 });
     }
 
@@ -45,6 +51,12 @@ export async function GET(request: Request) {
     });
 
     if (admins.length === 0) {
+      await prisma.auditLog.create({
+        data: {
+          action: "CRON_PENDING_REQUESTS",
+          details: { message: "No admins found. Emails skipped." },
+        }
+      });
       return NextResponse.json({ message: "No admins found. Emails skipped." }, { status: 200 });
     }
 
@@ -74,13 +86,31 @@ export async function GET(request: Request) {
     // Wait for all emails to attempt sending (failures are gracefully swallowed in lib/email)
     await Promise.all(emailPromises);
 
+    await prisma.auditLog.create({
+      data: {
+        action: "CRON_PENDING_REQUESTS",
+        details: { 
+          message: `Successfully notified ${admins.length} admins about ${pendingRequests.length} pending requests.`,
+          emailsSent: emailPromises.length 
+        },
+      }
+    });
+
     return NextResponse.json({ 
       message: `Successfully notified ${admins.length} admins about ${pendingRequests.length} pending requests (${emailPromises.length} emails total).`,
       success: true 
     }, { status: 200 });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to execute pending requests cron job:", error);
+    
+    await prisma.auditLog.create({
+      data: {
+        action: "CRON_PENDING_REQUESTS_FAILED",
+        details: { error: error?.message || "Unknown error" },
+      }
+    });
+
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
