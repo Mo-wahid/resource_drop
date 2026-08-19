@@ -14,7 +14,7 @@ interface AuditEntry {
   actor: {
     username: string;
     email: string;
-  };
+  } | null;
 }
 
 export function RecentActivityList({ entries }: { entries: AuditEntry[] }) {
@@ -77,7 +77,7 @@ export function RecentActivityList({ entries }: { entries: AuditEntry[] }) {
                       </div>
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-foreground truncate">{entry.actor.username}</span>
+                          <span className="font-medium text-foreground truncate">{entry.actor?.username || "System"}</span>
                           <Badge
                             variant="outline"
                             className={`rounded-xs text-[10px] px-1.5 py-0 uppercase font-semibold ${getActionBadgeColor(

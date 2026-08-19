@@ -16,14 +16,14 @@ import { SortableTableHead, TablePagination } from "@/components/admin/table-uti
 type AuditEntry = {
   id: string;
   action: string;
-  targetId: string;
+  targetId: string | null;
   details: any;
   createdAt: Date;
   actor: {
     id: string;
     username: string;
     email: string;
-  };
+  } | null;
 };
 
 export function AuditLogTable({
@@ -131,8 +131,8 @@ export function AuditLogTable({
             <TableRow key={log.id} className="hover:bg-muted/50">
               <TableCell>
                 <div className="flex flex-col">
-                  <span className="font-medium">{log.actor.username}</span>
-                  <span className="text-muted-foreground">{log.actor.email}</span>
+                  <span className="font-medium">{log.actor?.username || "System"}</span>
+                  <span className="text-muted-foreground">{log.actor?.email || "Automated Process"}</span>
                 </div>
               </TableCell>
               <TableCell>
@@ -149,9 +149,13 @@ export function AuditLogTable({
                 {formatAuditDetails(log.action, log.details)}
               </TableCell>
               <TableCell>
-                <span className="font-mono text-xs text-muted-foreground block" title={log.targetId}>
-                  {log.targetId.length > 13 ? `${log.targetId.substring(0, 8)}...` : log.targetId}
-                </span>
+                {log.targetId ? (
+                  <span className="font-mono text-xs text-muted-foreground block" title={log.targetId}>
+                    {log.targetId.length > 13 ? `${log.targetId.substring(0, 8)}...` : log.targetId}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/60 italic">—</span>
+                )}
               </TableCell>
               <TableCell className="text-right text-muted-foreground" suppressHydrationWarning>
                 {formatDate(log.createdAt)}
