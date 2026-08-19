@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { getAppUrl } from "@/lib/utils";
 
 interface PendingRequestEmailParams {
   adminName: string;
@@ -15,7 +16,7 @@ export function buildPendingRequestEmail({ adminName, projectName, requesterName
   subject: string;
   html: string;
 } {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const requestUrl = `${appUrl}/admin/requests/${requestId}`;
   
   const subject = `Action Required: Pending Request for ${projectName}`;

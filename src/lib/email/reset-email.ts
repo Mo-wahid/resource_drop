@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { getAppUrl } from "@/lib/utils";
 
 interface ResetEmailParams {
   rawToken: string;
@@ -11,7 +12,7 @@ export function buildResetEmail({ rawToken }: ResetEmailParams): {
   subject: string;
   html: string;
 } {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const resetUrl = `${appUrl}/register?token=${rawToken}`;
 
   const subject = `Reset your ${siteConfig.nameFull} password`;
