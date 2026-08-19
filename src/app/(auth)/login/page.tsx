@@ -53,12 +53,7 @@ function LoginContent() {
   return (
     <div className="w-full flex flex-col items-center">
       {/* Logo + Branding */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex flex-col items-center mb-10 text-center"
-      >
+      <div className="flex flex-col items-center mb-10 text-center animate-in fade-in slide-in-from-top-4 duration-500 ease-out">
         <ResourceDropLogo className="w-15 h-15 mb-4" />
         <h1 className="text-3xl text-white tracking-tight">
           <span className="font-light capitalize">{siteConfig.nameTop.toLowerCase()}</span><span className="font-bold capitalize">{siteConfig.nameBottom.toLowerCase()}</span>
@@ -66,15 +61,10 @@ function LoginContent() {
         <p className="text-sm text-slate-400 mt-1.5">
           {siteConfig.tagline}
         </p>
-      </motion.div>
+      </div>
 
       {/* Login Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-        className="w-full"
-      >
+      <div className="w-full animate-in fade-in zoom-in-95 duration-500 ease-out delay-100 fill-mode-both">
         <Card className="rounded-card shadow-lg">
           <CardContent className="p-8 pt-8">
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
@@ -165,7 +155,7 @@ function LoginContent() {
             </form>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }
