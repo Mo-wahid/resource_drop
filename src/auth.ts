@@ -1,6 +1,7 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import * as argon2 from "argon2";
+import { cache } from "react";
 
 // NextAuth v5 Module Augmentation
 declare module "next-auth" {
@@ -18,7 +19,7 @@ declare module "next-auth" {
 
 import { prisma } from "@/lib/db";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const { handlers, signIn, signOut, auth: uncachedAuth } = NextAuth({
   providers: [
     Credentials({
       name: "Credentials",
@@ -88,3 +89,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
 });
+
+export { handlers, signIn, signOut };
+export const auth = cache(uncachedAuth);

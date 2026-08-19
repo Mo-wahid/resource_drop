@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { FileUp, X, FileText, RefreshCw, CheckCircle2 } from "lucide-react";
+import { FileUp, X, FileText, RefreshCw, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { upload } from "@vercel/blob/client";
 
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -18,13 +19,12 @@ export function RequirementsUploadField({
   onRemove,
 }: {
   projectId: string;
-  onUploadComplete: (data: { key: string; filename: string }) => void;
+  onUploadComplete: (data: { url: string; filename: string }) => void;
   onRemove: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,56 +33,17 @@ export function RequirementsUploadField({
   const uploadFile = async (fileToUpload: File) => {
     setIsUploading(true);
     setError(null);
-    setProgress(0);
     setIsSuccess(false);
 
     try {
-      // 1. Get presigned URL
-      const res = await fetch(`/api/projects/${projectId}/upload-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: fileToUpload.name,
-          contentType: fileToUpload.type,
-          fileSize: fileToUpload.size,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to generate upload URL");
-      }
-
-      const { url, key } = await res.json();
-
-      // 2. Upload directly to MinIO using XMLHttpRequest for progress
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            setProgress(Math.round((event.loaded / event.total) * 100));
-          }
-        };
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
-        };
-
-        xhr.onerror = () => reject(new Error("Network error during upload"));
-        xhr.onabort = () => reject(new Error("Upload aborted"));
-
-        xhr.open("PUT", url, true);
-        xhr.setRequestHeader("Content-Type", fileToUpload.type);
-        xhr.send(fileToUpload);
+      // 1. Upload directly to Vercel Blob using the client SDK
+      const newBlob = await upload(fileToUpload.name, fileToUpload, {
+        access: 'public',
+        handleUploadUrl: `/api/projects/${projectId}/upload-url`,
       });
 
       setIsSuccess(true);
-      onUploadComplete({ key, filename: fileToUpload.name });
+      onUploadComplete({ url: newBlob.url, filename: fileToUpload.name });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
@@ -136,7 +97,6 @@ export function RequirementsUploadField({
   const handleRemove = () => {
     setFile(null);
     setIsSuccess(false);
-    setProgress(0);
     setError(null);
     onRemove();
   };
@@ -201,12 +161,12 @@ export function RequirementsUploadField({
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-medium">
                 <span>Uploading...</span>
-                <span>{progress}%</span>
+                <Loader2 className="size-3 animate-spin text-muted-foreground" />
               </div>
               <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-primary transition-all duration-300 ease-out" 
-                  style={{ width: `${progress}%` }} 
+                  className="h-full bg-primary/70 rounded-full animate-pulse" 
+                  style={{ width: '100%' }}
                 />
               </div>
             </div>

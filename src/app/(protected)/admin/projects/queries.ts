@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 
 export async function getProjects(
   view: "active" | "inactive" = "active",
@@ -70,28 +71,36 @@ export async function getProjectDetail(projectId: string) {
   });
 }
 
-export async function getEligibleMembers() {
-  return prisma.user.findMany({
-    where: {
-      accountStatus: "ACTIVE",
-      deletedAt: null,
-      role: {
-        name: { not: "ADMIN" }
-      }
-    },
-    select: { id: true, username: true, email: true },
-    orderBy: { username: "asc" },
-  });
-}
+export const getEligibleMembers = unstable_cache(
+  async () => {
+    return prisma.user.findMany({
+      where: {
+        accountStatus: "ACTIVE",
+        deletedAt: null,
+        role: {
+          name: { not: "ADMIN" }
+        }
+      },
+      select: { id: true, username: true, email: true },
+      orderBy: { username: "asc" },
+    });
+  },
+  ["eligible-members"],
+  { revalidate: 30 }
+);
 
-export async function getRoles() {
-  return prisma.role.findMany({
-    where: {
-      name: { not: "ADMIN" }
-    },
-    orderBy: { name: "asc" },
-  });
-}
+export const getRoles = unstable_cache(
+  async () => {
+    return prisma.role.findMany({
+      where: {
+        name: { not: "ADMIN" }
+      },
+      orderBy: { name: "asc" },
+    });
+  },
+  ["roles"],
+  { revalidate: 300 }
+);
 
 export async function getProjectRequests(projectId: string) {
   return prisma.resourceRequest.findMany({

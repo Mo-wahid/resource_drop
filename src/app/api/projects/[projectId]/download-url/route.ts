@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireProjectMembershipApi } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db";
-import { generatePresignedDownloadUrl } from "@/lib/s3";
 
 export const dynamic = "force-dynamic";
 
@@ -34,10 +33,8 @@ export async function GET(
       );
     }
 
-    // Generate a short-lived presigned URL (15 minutes = 900 seconds)
-    const url = await generatePresignedDownloadUrl(document.fileUrl, 900);
-
-    return NextResponse.json({ url, filename: document.fileName });
+    // Vercel Blobs are stored with public URLs in this app, so we just return it directly
+    return NextResponse.json({ url: document.fileUrl, filename: document.fileName });
   } catch (error) {
     console.error("Error generating download URL:", error);
     return NextResponse.json(

@@ -14,7 +14,7 @@ export const createProjectSchema = z.object({
     .max(500, { error: "Description must be at most 500 characters" }),
   memberIds: z.array(z.string().uuid()).optional(),
   requirementsDocument: z.object({
-    key: z.string(),
+    url: z.string().url(),
     filename: z.string()
   }).optional()
 });

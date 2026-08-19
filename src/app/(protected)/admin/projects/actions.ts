@@ -6,7 +6,7 @@ import { createProjectSchema, type CreateProjectInput } from "@/lib/validation/p
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma, Project } from "@prisma/client";
-import { deleteObject } from "@/lib/s3";
+import { deleteBlob } from "@/lib/storage";
 import { logAuditAction } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 
@@ -64,7 +64,7 @@ export async function createProject(data: CreateProjectInput) {
         await tx.projectDocument.create({
           data: {
             projectId: createdProject.id,
-            fileUrl: requirementsDocument.key,
+            fileUrl: requirementsDocument.url, // Vercel Blob returns a URL instead of a key
             fileName: requirementsDocument.filename,
             uploadedBy: authResult.session!.user.id,
           },
@@ -105,10 +105,10 @@ export async function createProject(data: CreateProjectInput) {
 }
 
 /**
- * Confirms that a requirements document has been uploaded to MinIO.
+ * Confirms that a requirements document has been uploaded to Vercel Blob.
  * Creates a new ProjectDocument row and deletes any existing one.
  */
-export async function confirmRequirementsUpload(projectId: string, objectKey: string, originalFilename: string) {
+export async function confirmRequirementsUpload(projectId: string, blobUrl: string, originalFilename: string) {
   const authResult = await requireRoleAction("ADMIN");
   if ("error" in authResult || !authResult.session) {
     return { error: authResult.error || "Unauthorized" };
@@ -122,7 +122,7 @@ export async function confirmRequirementsUpload(projectId: string, objectKey: st
     return { error: "Project not found" };
   }
 
-  let oldKeys: string[] = [];
+  let oldUrls: string[] = [];
 
   await prisma.$transaction(async (tx) => {
     // Delete existing requirements documents for this project
@@ -130,7 +130,7 @@ export async function confirmRequirementsUpload(projectId: string, objectKey: st
       where: { projectId },
     });
     
-    oldKeys = existingDocs.map(doc => doc.fileUrl);
+    oldUrls = existingDocs.map(doc => doc.fileUrl);
 
     await tx.projectDocument.deleteMany({
       where: { projectId },
@@ -140,16 +140,16 @@ export async function confirmRequirementsUpload(projectId: string, objectKey: st
     await tx.projectDocument.create({
       data: {
         projectId,
-        fileUrl: objectKey,
+        fileUrl: blobUrl,
         fileName: originalFilename,
         uploadedBy: authResult.session.user.id,
       },
     });
   });
 
-  // Delete orphaned physical files from MinIO
-  for (const key of oldKeys) {
-    if (key) await deleteObject(key);
+  // Delete orphaned physical files from Vercel Blob
+  for (const url of oldUrls) {
+    if (url) await deleteBlob(url);
   }
 
   await logAuditAction(authResult.session.user.id, "PROJECT_DOC_UPLOAD", projectId, { fileName: originalFilename });
@@ -161,7 +161,6 @@ export async function confirmRequirementsUpload(projectId: string, objectKey: st
 
 /**
  * Removes the requirements document from a project.
- * (Note: Does not delete the physical object from MinIO immediately).
  */
 export async function removeRequirementsDocument(projectId: string) {
   const authResult = await requireRoleAction("ADMIN");
@@ -177,9 +176,9 @@ export async function removeRequirementsDocument(projectId: string) {
     where: { projectId },
   });
 
-  // Delete physical files from MinIO
+  // Delete physical files from Vercel Blob
   for (const doc of documents) {
-    if (doc.fileUrl) await deleteObject(doc.fileUrl);
+    if (doc.fileUrl) await deleteBlob(doc.fileUrl);
   }
 
   await logAuditAction(authResult.session.user.id, "PROJECT_DOC_REMOVE", projectId);

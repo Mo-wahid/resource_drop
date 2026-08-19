@@ -47,3 +47,5 @@ next-env.d.ts
 .windsurf
 .vscode/
 .antigravity/
+.vercel
+.env*

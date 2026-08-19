@@ -75,11 +75,11 @@ export async function getAdminRequestDetail(requestId: string) {
   return prisma.resourceRequest.findUnique({
     where: { id: requestId },
     include: {
-      project: true,
+      project: { select: { id: true, name: true, status: true } },
       user: {
         select: { id: true, username: true, email: true }
       },
-      resourceType: true,
+      resourceType: { select: { id: true, name: true } },
       history: {
         include: {
           changer: {

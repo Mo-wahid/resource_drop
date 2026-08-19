@@ -79,11 +79,11 @@ export async function getMemberRequestDetail(requestId: string, userId: string) 
       }
     },
     include: {
-      project: true,
+      project: { select: { id: true, name: true, status: true } },
       user: {
         select: { id: true, username: true, email: true }
       },
-      resourceType: true,
+      resourceType: { select: { id: true, name: true } },
       history: {
         include: {
           changer: {

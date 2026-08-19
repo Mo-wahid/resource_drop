@@ -23,16 +23,16 @@ export default async function AdminProjectDetailPage({
     return <div>Unauthorized</div>;
   }
 
-  const project = await getProjectDetail(id);
-  if (!project) {
-    notFound();
-  }
-
-  const [eligibleMembers, roles, projectRequests] = await Promise.all([
+  const [project, eligibleMembers, roles, projectRequests] = await Promise.all([
+    getProjectDetail(id),
     getEligibleMembers(),
     getRoles(),
     getProjectRequests(id)
   ]);
+
+  if (!project) {
+    notFound();
+  }
   
   const requirementsFilename = project.documents?.[0]?.fileName || null;
 

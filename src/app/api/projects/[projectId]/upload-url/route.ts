@@ -1,20 +1,8 @@
 import { NextResponse } from "next/server";
-import { generatePresignedUploadUrl } from "@/lib/s3";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { requireRole } from "@/lib/auth/guard";
-import { z } from "zod";
-import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
-
-const uploadRequestSchema = z.object({
-  filename: z.string().min(1),
-  contentType: z.enum([
-    "application/pdf",
-    "text/markdown",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ]),
-  fileSize: z.number().max(10 * 1024 * 1024, "File size must not exceed 10MB"),
-});
 
 export async function POST(
   request: Request,
@@ -22,40 +10,36 @@ export async function POST(
 ) {
   try {
     const { projectId } = await params;
+    const body = (await request.json()) as HandleUploadBody;
     
-    // 1. Verify caller is an admin
-    const authResult = await requireRole("ADMIN");
-    if (authResult instanceof NextResponse) return authResult;
+    // Vercel Blob uses a two-step process handled magically by handleUpload.
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        // 1. Verify caller is an admin
+        const authResult = await requireRole("ADMIN");
+        if (authResult instanceof NextResponse) {
+          throw new Error("Unauthorized");
+        }
 
-    // 2. Parse and validate request
-    const body = await request.json();
-    const parsed = uploadRequestSchema.safeParse(body);
+        return {
+          allowedContentTypes: [
+            "application/pdf",
+            "text/markdown",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          ],
+          maximumSizeInBytes: 10 * 1024 * 1024,
+          tokenPayload: JSON.stringify({ projectId }),
+        };
+      },
+    });
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const { filename, contentType } = parsed.data;
-
-    // 3. (Removed project verification so we can upload for pending projects)
-
-    // 4. Generate unique key
-    const uuid = crypto.randomUUID();
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const key = `projects/${projectId}/requirements/${uuid}-${sanitizedFilename}`;
-
-    // 5. Generate presigned URL
-    const url = await generatePresignedUploadUrl(key, contentType);
-
-    return NextResponse.json({ url, key });
-  } catch (error: unknown) {
-    console.error("Failed to generate upload URL:", error);
+    return NextResponse.json(jsonResponse);
+  } catch (error) {
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { error: (error as Error).message },
+      { status: 400 } // The webhook will retry 5 times waiting for a 200
     );
   }
 }
