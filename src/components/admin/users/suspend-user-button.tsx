@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Trash2, Loader2 } from "lucide-react";
+import { Ban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteUser } from "@/app/(protected)/admin/users/actions";
 import { toast } from "sonner";
@@ -17,14 +17,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export function DeleteUserButton({ userId, userName, currentUserId }: { userId: string; userName: string; currentUserId: string }) {
+export function SuspendUserButton({ userId, userName, currentUserId }: { userId: string; userName: string; currentUserId: string }) {
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Disable button if user is trying to delete themselves
+  // Disable button if user is trying to suspend themselves
   const isSelf = currentUserId === userId;
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleSuspend = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent alert dialog from closing automatically
     
     startTransition(async () => {
@@ -38,7 +38,7 @@ export function DeleteUserButton({ userId, userName, currentUserId }: { userId: 
         setIsOpen(false);
       } else {
         if (typeof toast !== 'undefined' && toast.success) {
-           toast.success("User deleted successfully");
+           toast.success("User suspended successfully");
         }
         setIsOpen(false);
       }
@@ -56,39 +56,39 @@ export function DeleteUserButton({ userId, userName, currentUserId }: { userId: 
             size="icon-sm" 
             disabled={isPending}
             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            title="Delete User"
+            title="Suspend User"
           />
         }
       >
         {isPending ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
-          <Trash2 className="size-4" />
+          <Ban className="size-4" />
         )}
-        <span className="sr-only">Delete</span>
+        <span className="sr-only">Suspend</span>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Suspend this user?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete the user account for <strong>{userName}</strong>. 
-            This action cannot be undone.
+            This will suspend the user account for <strong>{userName}</strong>. 
+            They will immediately lose access to the system, but their data and project history will be preserved.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={handleDelete} 
+            onClick={handleSuspend} 
             disabled={isPending}
             variant="destructive"
           >
             {isPending ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
-                Deleting...
+                Suspending...
               </>
             ) : (
-              "Delete User"
+              "Suspend User"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

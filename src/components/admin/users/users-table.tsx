@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DeleteUserButton } from "./delete-user-button";
+import { SuspendUserButton } from "./suspend-user-button";
 import { SortableTableHead, TablePagination } from "@/components/admin/table-utils";
 import { useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/utils";
@@ -87,7 +87,7 @@ export function UsersTable({ users, currentUserId, currentPage, totalPages, tota
                   {isSelf ? (
                     <span className="text-xs font-medium text-muted-foreground pr-2">You</span>
                   ) : (
-                    <DeleteUserButton userId={user.id} userName={user.username} currentUserId={currentUserId} />
+                    <SuspendUserButton userId={user.id} userName={user.username} currentUserId={currentUserId} />
                   )}
                 </TableCell>
               </TableRow>
