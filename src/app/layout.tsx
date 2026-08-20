@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ResourceDrop",
   description: "Automated Resource Provisioning & Workflow Management",
+  icons: {
+    icon: "/musketeers.svg",
+  },
 };
 
 export default function RootLayout({
