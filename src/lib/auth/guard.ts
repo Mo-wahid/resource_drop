@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 export async function requireAuth() {
   const session = await auth();
   
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,7 +30,7 @@ export async function requireRole(role: string) {
 export async function requireAuthAction(): Promise<{ session: any; error?: string }> {
   const session = await auth();
   
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 

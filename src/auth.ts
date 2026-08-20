@@ -67,25 +67,29 @@ const { handlers, signIn, signOut, auth: uncachedAuth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // The user object is only passed on the initial sign in
       if (user) {
         token.id = user.id;
         token.role = user.role;
       }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token.id && session.user) {
-        // Enforce immediate force-logout if a user is suspended or deleted
+
+      // Enforce immediate force-logout if a user is suspended or deleted
+      if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
           select: { accountStatus: true, deletedAt: true }
         });
 
         if (!dbUser || dbUser.deletedAt || dbUser.accountStatus !== "ACTIVE") {
-          return {} as any; // Invalidates the session immediately
+          return null as any;
         }
+      }
 
+      return token;
+    },
+    async session({ session, token }) {
+      if (!token) return session;
+
+      if (token.id && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
       }
