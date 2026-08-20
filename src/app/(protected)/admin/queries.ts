@@ -86,6 +86,11 @@ export async function getAdminRequestStatusBreakdown() {
     by: ["status"],
     where: {
       deletedAt: null,
+      project: {
+        status: {
+          notIn: ["COMPLETED", "ARCHIVED"]
+        }
+      }
     },
     _count: {
       status: true,

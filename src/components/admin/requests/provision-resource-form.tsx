@@ -4,17 +4,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { provisionRequestAction } from "@/app/(protected)/admin/requests/actions";
 import { Loader2 } from "lucide-react";
+import { RequirementsUploadField } from "@/components/admin/projects/requirements-upload-field";
 
 export function ProvisionResourceForm({ request }: { request: any }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const resourceType = request.resourceType.name;
+  const isCustom = request.resourceType.isCustom;
 
   // Dynamic state based on resource type
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [attachment, setAttachment] = useState<{ url: string; filename: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +26,8 @@ export function ProvisionResourceForm({ request }: { request: any }) {
 
     const result = await provisionRequestAction(request.id, {
       connectionDetails: formData,
+      attachmentUrl: attachment?.url,
+      attachmentName: attachment?.filename,
     });
 
     if (result.error) {
@@ -43,7 +49,9 @@ export function ProvisionResourceForm({ request }: { request: any }) {
 
   // Validation logic
   let isValid = false;
-  if (resourceType === "github_repo") {
+  if (isCustom) {
+    isValid = !!(formData.genericText?.trim() || attachment);
+  } else if (resourceType === "github_repo") {
     isValid = !!formData.repositoryUrl?.trim();
   } else if (resourceType === "database") {
     isValid = !!formData.connectionString?.trim();
@@ -68,7 +76,29 @@ export function ProvisionResourceForm({ request }: { request: any }) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {resourceType === "github_repo" && (
+          {isCustom && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="genericText">Details / Instructions</Label>
+                <Textarea 
+                  id="genericText" 
+                  placeholder="Enter credentials, links, or instructions..." 
+                  onChange={e => handleInputChange("genericText", e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Attachment (Optional)</Label>
+                <RequirementsUploadField 
+                  projectId={request.projectId} 
+                  onUploadComplete={(data) => setAttachment(data)}
+                  onRemove={() => setAttachment(null)}
+                />
+              </div>
+            </div>
+          )}
+
+          {!isCustom && resourceType === "github_repo" && (
             <div className="space-y-2">
               <Label htmlFor="repoUrl">Repository URL</Label>
               <Input 
@@ -80,7 +110,7 @@ export function ProvisionResourceForm({ request }: { request: any }) {
             </div>
           )}
 
-          {resourceType === "database" && (
+          {!isCustom && resourceType === "database" && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="connectionString">Connection String</Label>
@@ -94,7 +124,7 @@ export function ProvisionResourceForm({ request }: { request: any }) {
             </>
           )}
 
-          {resourceType === "object_storage" && (
+          {!isCustom && resourceType === "object_storage" && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="bucketName">Bucket Name / URL</Label>
@@ -127,7 +157,7 @@ export function ProvisionResourceForm({ request }: { request: any }) {
             </>
           )}
 
-          {resourceType === "api_key" && (
+          {!isCustom && resourceType === "api_key" && (
             <>
               <div className="space-y-2">
                 <Label>API Keys</Label>

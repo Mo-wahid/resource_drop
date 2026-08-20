@@ -1,5 +1,5 @@
 import { requireAuthAction } from "@/lib/auth/guard";
-import { getMemberRequests, getMemberAssignedProjects } from "./queries";
+import { getMemberRequests, getMemberAssignedProjects, getResourceTypes } from "./queries";
 import { MemberRequestsTable } from "@/components/member/requests/member-requests-table";
 import { NewRequestModal } from "@/components/member/requests/new-request-modal";
 
@@ -18,9 +18,10 @@ export default async function MyRequestsPage({
   const sortBy = (sortParam as string) || "createdAt";
   const sortOrder = (orderParam as "asc" | "desc") || "desc";
 
-  const [requestsData, projects] = await Promise.all([
+  const [requestsData, projects, resourceTypes] = await Promise.all([
     getMemberRequests(authResult.session.user.id, currentPage, 10, sortBy, sortOrder),
     getMemberAssignedProjects(authResult.session.user.id),
+    getResourceTypes(),
   ]);
 
   return (
@@ -32,7 +33,7 @@ export default async function MyRequestsPage({
             Manage your resource requests across all projects.
           </p>
         </div>
-        <NewRequestModal projects={projects} />
+        <NewRequestModal projects={projects} resourceTypes={resourceTypes} />
       </div>
 
       <div key={currentPage} className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">

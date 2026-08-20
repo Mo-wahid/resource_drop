@@ -42,26 +42,52 @@ export async function createResourceRequest(data: RequestFormInput) {
       return { error: "You are not a member of this project." };
     }
 
-    // Lookup the resource type by name
-    const resourceType = await prisma.resourceType.findUnique({
-      where: { name: validData.resourceType },
-    });
+    let resourceType;
+    let actualParams: any = {};
 
-    if (!resourceType) {
-      return { error: "Invalid resource type." };
+    if (validData.resourceType === "create_custom") {
+      const customData = validData as any;
+      let category = await prisma.resourceCategory.findUnique({ where: { name: "Custom" } });
+      if (!category) {
+        category = await prisma.resourceCategory.create({
+          data: { name: "Custom", description: "Custom resources requested by members" }
+        });
+      }
+      
+      resourceType = await prisma.resourceType.upsert({
+        where: { name: customData.customName },
+        update: {},
+        create: {
+          name: customData.customName,
+          isCustom: true,
+          categoryId: category.id
+        }
+      });
+      
+      actualParams = {
+        description: customData.customDescription
+      };
+    } else {
+      resourceType = await prisma.resourceType.findUnique({
+        where: { name: validData.resourceType as string },
+      });
+
+      if (!resourceType) {
+        return { error: "Invalid resource type." };
+      }
+      
+      const { projectId: _pId, resourceType: _rt, ...params } = validData as any;
+      actualParams = params;
     }
-
-    // Extract type-specific parameters safely without `projectId` or `resourceType`
-    const { projectId, resourceType: _rt, ...params } = validData;
 
     const result = await prisma.$transaction(async (tx) => {
       const req = await tx.resourceRequest.create({
         data: {
-          projectId,
+          projectId: validData.projectId,
           userId,
           resourceTypeId: resourceType.id,
           status: "PENDING", // Status is HARDCODED to pending server-side
-          parameters: params,
+          parameters: actualParams,
         },
       });
 
@@ -80,7 +106,7 @@ export async function createResourceRequest(data: RequestFormInput) {
       });
 
       if (admins.length > 0) {
-        const project = await tx.project.findUnique({ where: { id: projectId } });
+        const project = await tx.project.findUnique({ where: { id: validData.projectId } });
         const username = authResult.session.user.name || authResult.session.user.email?.split('@')[0] || "A member";
         const projectName = project?.name || "a project";
         
@@ -99,9 +125,9 @@ export async function createResourceRequest(data: RequestFormInput) {
     });
 
     revalidatePath("/my-requests");
-    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${validData.projectId}`);
     
-    await logAuditAction(userId, "REQUEST_CREATE", result.req.id, { projectId, resourceType: resourceType.name });
+    await logAuditAction(userId, "REQUEST_CREATE", result.req.id, { projectId: validData.projectId, resourceType: resourceType.name });
 
     // Send emails async
     result.admins.forEach(admin => {

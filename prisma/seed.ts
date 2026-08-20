@@ -35,10 +35,10 @@ async function main() {
   console.log('Seeding Users...');
   const passwordHash = await argon2.hash('password123'); // All users will have 'password123'
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@resourcedrop.local' },
+    where: { email: 'mowahid923@gmail.com' },
     update: {},
     create: {
-      email: 'admin@resourcedrop.local',
+      email: 'mowahid923@gmail.com',
       username: 'admin',
       passwordHash,
       accountStatus: 'ACTIVE',
@@ -48,7 +48,7 @@ async function main() {
 
   // Create some standard users
   const members = [];
-  for (let i = 1; i <= 9; i++) {
+  for (let i = 1; i <= 5; i++) {
     const member = await prisma.user.upsert({
       where: { email: `member${i}@resourcedrop.local` },
       update: {},
@@ -67,7 +67,7 @@ async function main() {
   console.log('Seeding Projects & Relations...');
   const projects = [];
   const projectStatuses = ['PLANNING', 'ACTIVE', 'COMPLETED', 'ARCHIVED'];
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 5; i++) {
     const status = projectStatuses[i % 4];
     const p = await prisma.project.upsert({
       where: { name: `Project ${i}` },
@@ -79,9 +79,8 @@ async function main() {
         status: status as any,
         members: {
           create: [
-            { userId: admin.id, projectRoleId: memberRole.id },
-            { userId: members[i % 9].id, projectRoleId: memberRole.id },
-            { userId: members[(i + 1) % 9].id, projectRoleId: viewerRole.id },
+            { userId: members[i % 5].id, projectRoleId: memberRole.id },
+            { userId: members[(i + 1) % 5].id, projectRoleId: viewerRole.id },
           ],
         },
       },
@@ -180,8 +179,8 @@ async function main() {
     const rType = resourceTypes[i % resourceTypes.length];
     await prisma.resourceRequest.create({
       data: {
-        project: { connect: { id: projects[i - 1].id } },
-        user: { connect: { id: members[i % 9].id } },
+        project: { connect: { id: projects[i % 5].id } },
+        user: { connect: { id: members[i % 5].id } },
         resourceType: { connect: { id: rType.id } },
         status: status as any,
         parameters: { note: `Parameter for request ${i}` },
@@ -190,8 +189,8 @@ async function main() {
   }
 
   console.log('Seed completed successfully!');
-  console.log('Admin Login: admin@resourcedrop.local / password123');
-  console.log('Member Logins: member[1-9]@resourcedrop.local / password123');
+  console.log('Admin Login: mowahid923@gmail.com / password123');
+  console.log('Member Logins: member[1-5]@resourcedrop.local / password123');
 }
 
 main()

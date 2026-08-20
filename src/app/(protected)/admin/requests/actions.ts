@@ -167,7 +167,7 @@ export async function addRequestComment(requestId: string, message: string) {
 
 export async function provisionRequestAction(
   requestId: string,
-  data: { vaultReference?: string; connectionDetails?: any }
+  data: { vaultReference?: string; connectionDetails?: any; attachmentUrl?: string; attachmentName?: string }
 ) {
   const authResult = await requireAuthAction();
   if ("error" in authResult || !authResult.session) {
@@ -196,7 +196,11 @@ export async function provisionRequestAction(
     const resourceTypeName = request.resourceType.name;
     const details = data.connectionDetails || {};
 
-    if (resourceTypeName === "github_repo") {
+    if (request.resourceType.isCustom) {
+      if ((!details.genericText || typeof details.genericText !== "string" || !details.genericText.trim()) && !data.attachmentUrl) {
+        return { error: "Either connection details or an attachment is required" };
+      }
+    } else if (resourceTypeName === "github_repo") {
       if (!details.repositoryUrl || typeof details.repositoryUrl !== "string" || !details.repositoryUrl.trim()) {
         return { error: "Repository URL is required" };
       }
@@ -232,7 +236,7 @@ export async function provisionRequestAction(
     // Perform provision in a transaction
     await prisma.$transaction(async (tx) => {
       // 1. Create ProvisionedResource
-      await tx.provisionedResource.create({
+      const provRes = await tx.provisionedResource.create({
         data: {
           projectId: request.projectId,
           resourceTypeId: request.resourceTypeId,
@@ -241,6 +245,17 @@ export async function provisionRequestAction(
           connectionDetails: data.connectionDetails || {},
         },
       });
+
+      if (data.attachmentUrl && data.attachmentName) {
+        await tx.resourceAttachment.create({
+          data: {
+            resourceId: provRes.id,
+            fileUrl: data.attachmentUrl,
+            fileName: data.attachmentName,
+            uploadedBy: authResult.session.user.id
+          }
+        });
+      }
 
       // 2. Update status
       const newStatus = "PROVISIONED";

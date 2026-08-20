@@ -4,7 +4,7 @@ const baseSchema = z.object({
   projectId: z.string().uuid({ message: "Invalid project ID" }),
 });
 
-export const requestFormSchema = z.discriminatedUnion("resourceType", [
+export const requestFormSchema = z.union([
   baseSchema.extend({
     resourceType: z.literal("github_repo"),
     // No additional parameters needed for github_repo
@@ -29,6 +29,14 @@ export const requestFormSchema = z.discriminatedUnion("resourceType", [
     engine: z.enum(["postgresql", "mysql", "mongodb"], {
       message: "Please select a valid database engine",
     }),
+  }),
+  baseSchema.extend({
+    resourceType: z.literal("create_custom"),
+    customName: z.string().trim().min(1, { message: "Name is required" }),
+    customDescription: z.string().trim().optional(),
+  }),
+  baseSchema.extend({
+    resourceType: z.string(), // Catch-all for existing dynamic custom types
   }),
 ]);
 

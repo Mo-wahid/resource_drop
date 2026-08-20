@@ -1,6 +1,6 @@
 import { requireProjectMembership } from "@/lib/auth/guard";
 import { getMemberProjectDetail, getMemberProjectRequests } from "../queries";
-import { getMemberAssignedProjects } from "@/app/(protected)/my-requests/queries";
+import { getMemberAssignedProjects, getResourceTypes } from "@/app/(protected)/my-requests/queries";
 import { ProjectRequestsTable } from "@/components/projects/project-requests-table";
 import { NewRequestModal } from "@/components/member/requests/new-request-modal";
 import { MemberTeamTable } from "@/components/member/projects/member-team-table";
@@ -43,10 +43,11 @@ export default async function MemberProjectDetailPage({
     );
   }
 
-  const [project, memberRequests, allProjects] = await Promise.all([
+  const [project, memberRequests, allProjects, resourceTypes] = await Promise.all([
     getMemberProjectDetail(id, authResult.session.user.id),
     getMemberProjectRequests(id, authResult.session.user.id),
     getMemberAssignedProjects(authResult.session.user.id),
+    getResourceTypes(),
   ]);
   
   // This shouldn't happen because of the guard, but TypeScript needs it
@@ -89,7 +90,7 @@ export default async function MemberProjectDetailPage({
         </div>
         
         <div className="mt-2 sm:mt-8">
-          <NewRequestModal projects={allProjects} defaultProjectId={project.id} />
+          <NewRequestModal projects={allProjects} resourceTypes={resourceTypes} defaultProjectId={project.id} />
         </div>
       </div>
 

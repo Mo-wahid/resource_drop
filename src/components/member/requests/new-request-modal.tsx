@@ -15,9 +15,11 @@ import { CreateRequestForm } from "./create-request-form";
 
 export function NewRequestModal({ 
   projects,
+  resourceTypes,
   defaultProjectId,
 }: { 
-  projects: React.ComponentProps<typeof CreateRequestForm>["projects"] 
+  projects: React.ComponentProps<typeof CreateRequestForm>["projects"]
+  resourceTypes: React.ComponentProps<typeof CreateRequestForm>["resourceTypes"] 
   defaultProjectId?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -36,7 +38,7 @@ export function NewRequestModal({
           </DialogDescription>
         </DialogHeader>
         <div className="pt-4">
-          <CreateRequestForm projects={projects} onSuccess={() => setOpen(false)} defaultProjectId={defaultProjectId} />
+          <CreateRequestForm projects={projects} resourceTypes={resourceTypes} onSuccess={() => setOpen(false)} defaultProjectId={defaultProjectId} />
         </div>
       </DialogContent>
     </Dialog>

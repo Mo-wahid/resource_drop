@@ -79,7 +79,7 @@ export async function getAdminRequestDetail(requestId: string) {
       user: {
         select: { id: true, username: true, email: true }
       },
-      resourceType: { select: { id: true, name: true } },
+      resourceType: { select: { id: true, name: true, isCustom: true } },
       history: {
         include: {
           changer: {
@@ -96,7 +96,11 @@ export async function getAdminRequestDetail(requestId: string) {
         },
         orderBy: { createdAt: "asc" }
       },
-      provisionedResource: true,
+      provisionedResource: {
+        include: {
+          attachments: true
+        }
+      },
     }
   });
 }

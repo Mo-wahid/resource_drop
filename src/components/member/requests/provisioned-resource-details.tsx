@@ -122,6 +122,25 @@ export function ProvisionedResourceDetails({ resource, request }: { resource: an
           </div>
         )}
 
+        {resource.attachments && resource.attachments.length > 0 && (
+          <div className="space-y-4 pt-4 border-t border-green-500/10">
+            <p className="text-sm font-medium text-green-900">Attachments</p>
+            <div className="grid gap-3">
+              {resource.attachments.map((attachment: any) => (
+                <div key={attachment.id} className="flex flex-col sm:flex-row items-center justify-between p-3 rounded-md bg-background border border-green-500/20 gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="size-4 text-green-600 shrink-0" />
+                    <span className="text-sm font-medium truncate">{attachment.fileName}</span>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => window.open(attachment.fileUrl, "_blank")} className="shrink-0 w-full sm:w-auto">
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </CardContent>
     </Card>
   );

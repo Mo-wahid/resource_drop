@@ -15,7 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Loader2, GitBranch, HardDrive, Key, Database, FolderGit2, Send } from "lucide-react";
+import { Loader2, GitBranch, HardDrive, Key, Database, FolderGit2, Send, Puzzle, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { TagsInput } from "@/components/ui/tags-input";
 
@@ -24,19 +24,29 @@ type AssignedProject = {
   name: string;
 };
 
-const RESOURCE_TYPES = [
-  { id: "github_repo", name: "GitHub Repo", icon: GitBranch },
-  { id: "object_storage", name: "Object Storage Bucket", icon: HardDrive },
-  { id: "api_key", name: "API Key", icon: Key },
-  { id: "database", name: "Database", icon: Database },
-] as const;
+type ResourceType = {
+  id: string;
+  name: string;
+  isCustom: boolean;
+};
+
+const getIcon = (name: string, isCustom: boolean) => {
+  if (isCustom) return Puzzle;
+  if (name === "github_repo") return GitBranch;
+  if (name === "object_storage") return HardDrive;
+  if (name === "api_key") return Key;
+  if (name === "database") return Database;
+  return Puzzle;
+};
 
 export function CreateRequestForm({
   projects,
+  resourceTypes,
   onSuccess,
   defaultProjectId,
 }: {
   projects: AssignedProject[];
+  resourceTypes: ResourceType[];
   onSuccess?: () => void;
   defaultProjectId?: string;
 }) {
@@ -73,6 +83,9 @@ export function CreateRequestForm({
       setValue("keys", []);
     } else if (type === "database") {
       setValue("engine", "postgresql");
+    } else if (type === "create_custom") {
+      setValue("customName", "");
+      setValue("customDescription", "");
     }
   };
 
@@ -147,29 +160,54 @@ export function CreateRequestForm({
           <SelectTrigger>
             <span className="flex flex-1 items-center gap-2 text-left text-sm">
               {(() => {
-                const rt = RESOURCE_TYPES.find((r) => r.id === resourceType);
-                const Icon = rt?.icon;
-                return (
-                  <>
-                    {Icon && <Icon className="size-4 text-muted-foreground" />}
-                    <span>{rt?.name || "Select a resource type"}</span>
-                  </>
-                );
+                if (resourceType === "create_custom") {
+                  return (
+                    <>
+                      <PlusCircle className="size-4 text-muted-foreground" />
+                      <span>Create custom request...</span>
+                    </>
+                  );
+                }
+                const rt = resourceTypes.find((r) => r.name === resourceType);
+                if (rt) {
+                  const Icon = getIcon(rt.name, rt.isCustom);
+                  const displayName = rt.name === "github_repo" ? "GitHub Repo" : 
+                                      rt.name === "object_storage" ? "Object Storage Bucket" : 
+                                      rt.name === "api_key" ? "API Key" : 
+                                      rt.name === "database" ? "Database" : rt.name;
+                  return (
+                    <>
+                      <Icon className="size-4 text-muted-foreground" />
+                      <span>{displayName}</span>
+                    </>
+                  );
+                }
+                return <span>Select a resource type</span>;
               })()}
             </span>
           </SelectTrigger>
           <SelectContent>
-            {RESOURCE_TYPES.map((r) => {
-              const Icon = r.icon;
+            {resourceTypes.map((r) => {
+              const Icon = getIcon(r.name, r.isCustom);
+              const displayName = r.name === "github_repo" ? "GitHub Repo" : 
+                                  r.name === "object_storage" ? "Object Storage Bucket" : 
+                                  r.name === "api_key" ? "API Key" : 
+                                  r.name === "database" ? "Database" : r.name;
               return (
-                <SelectItem key={r.id} value={r.id}>
+                <SelectItem key={r.name} value={r.name}>
                   <div className="flex items-center gap-2">
                     <Icon className="size-4 text-muted-foreground" />
-                    <span>{r.name}</span>
+                    <span>{displayName}</span>
                   </div>
                 </SelectItem>
               );
             })}
+            <SelectItem value="create_custom">
+              <div className="flex items-center gap-2 text-primary">
+                <PlusCircle className="size-4" />
+                <span>Create custom request...</span>
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
         {/* @ts-ignore */}
@@ -241,7 +279,29 @@ export function CreateRequestForm({
                   <p className="text-tiny font-medium text-destructive">{errors.engine.message}</p>
                 )}
               </div>
+            </div>
+          )}
 
+          {resourceType === "create_custom" && (
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="customName" required>Custom Resource Name</Label>
+                <Input id="customName" placeholder="e.g. AWS EC2 Instance" {...register("customName")} />
+                {/* @ts-ignore */}
+                {errors.customName && (
+                  // @ts-ignore
+                  <p className="text-tiny font-medium text-destructive">{errors.customName.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="customDescription">Description (Optional)</Label>
+                <Input id="customDescription" placeholder="Any specific requirements..." {...register("customDescription")} />
+                {/* @ts-ignore */}
+                {errors.customDescription && (
+                  // @ts-ignore
+                  <p className="text-tiny font-medium text-destructive">{errors.customDescription.message}</p>
+                )}
+              </div>
             </div>
           )}
         </div>
