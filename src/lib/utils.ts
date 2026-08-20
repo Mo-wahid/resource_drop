@@ -23,5 +23,7 @@ export function getAppUrl() {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
-  return "http://localhost:3000";
+  
+  // Final fallback
+  return "https://resource-drop-ruby.vercel.app";
 }
