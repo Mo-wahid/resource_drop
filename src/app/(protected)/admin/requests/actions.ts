@@ -181,7 +181,7 @@ export async function provisionRequestAction(
   try {
     const request = await prisma.resourceRequest.findUnique({
       where: { id: requestId },
-      include: { project: true, user: true }
+      include: { project: true, user: true, resourceType: true }
     });
 
     if (!request) {
@@ -190,6 +190,43 @@ export async function provisionRequestAction(
 
     if (request.status === "PROVISIONED" || request.status === "REJECTED" || request.status === "REVOKED") {
       return { error: "Request cannot be provisioned in its current status" };
+    }
+
+    // Validate connection details based on resource type
+    const resourceTypeName = request.resourceType.name;
+    const details = data.connectionDetails || {};
+
+    if (resourceTypeName === "github_repo") {
+      if (!details.repositoryUrl || typeof details.repositoryUrl !== "string" || !details.repositoryUrl.trim()) {
+        return { error: "Repository URL is required" };
+      }
+    } else if (resourceTypeName === "database") {
+      if (!details.connectionString || typeof details.connectionString !== "string" || !details.connectionString.trim()) {
+        return { error: "Connection String is required" };
+      }
+    } else if (resourceTypeName === "object_storage") {
+      if (!details.bucketName || typeof details.bucketName !== "string" || !details.bucketName.trim()) {
+        return { error: "Bucket Name is required" };
+      }
+      if (!details.accessKeyId || typeof details.accessKeyId !== "string" || !details.accessKeyId.trim()) {
+        return { error: "Access Key ID is required" };
+      }
+      if (!details.secretAccessKey || typeof details.secretAccessKey !== "string" || !details.secretAccessKey.trim()) {
+        return { error: "Secret Access Key is required" };
+      }
+    } else if (resourceTypeName === "api_key") {
+      const keys = (request.parameters as any)?.keys;
+      if (Array.isArray(keys) && keys.length > 0) {
+        for (const k of keys) {
+          if (!details[k] || typeof details[k] !== "string" || !details[k].trim()) {
+            return { error: `Key ${k} is required` };
+          }
+        }
+      } else {
+        if (!details.apiKey || typeof details.apiKey !== "string" || !details.apiKey.trim()) {
+          return { error: "API Key is required" };
+        }
+      }
     }
 
     // Perform provision in a transaction

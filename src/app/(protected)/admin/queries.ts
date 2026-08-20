@@ -27,6 +27,11 @@ export async function getAdminDashboardStats() {
       where: {
         deletedAt: null,
         status: RequestStatus.PENDING,
+        project: {
+          status: {
+            notIn: ["COMPLETED", "ARCHIVED"]
+          }
+        }
       },
     }),
     // Provisioned resources count

@@ -52,7 +52,7 @@ export async function createInvitation(data: InviteFormInput) {
 
   // 5. Generate secure token
   const { raw, hash } = generateInviteToken();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
   // 6. Transaction: create/update user + revoke old invitations + create new invitation
   const targetUserId = await prisma.$transaction(async (tx) => {
@@ -195,7 +195,7 @@ export async function resendInvitation(invitationId: string) {
   });
 
   const { raw, hash } = generateInviteToken();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
   await prisma.$transaction(async (tx) => {
     // Revoke old invitation

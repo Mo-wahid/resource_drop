@@ -89,6 +89,18 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
     );
   }
 
+  // 4. Try to find if user already has a username (for password resets)
+  let existingUsername = undefined;
+  if (invitation) {
+    const user = await prisma.user.findUnique({
+      where: { email: invitation.email },
+      select: { username: true }
+    });
+    if (user?.username) {
+      existingUsername = user.username;
+    }
+  }
+
   // 5. Render the form inside the aesthetic card
   return (
     <div className="w-full flex flex-col items-center">
@@ -96,7 +108,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
       <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
         <Card className="rounded-card shadow-lg">
           <CardContent className="p-8 pt-8">
-             <SetPasswordForm rawToken={token} email={invitation.email} />
+             <SetPasswordForm rawToken={token} email={invitation.email} defaultUsername={existingUsername} />
           </CardContent>
         </Card>
       </div>

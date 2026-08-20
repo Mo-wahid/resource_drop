@@ -80,6 +80,19 @@ export async function createProject(data: CreateProjectInput) {
             linkUrl: `/projects/${createdProject.id}`,
           })),
         });
+
+        const addedUsers = await tx.user.findMany({
+          where: { id: { in: memberIds } },
+          select: { email: true, username: true }
+        });
+
+        addedUsers.forEach(user => {
+          sendEmail({
+            to: user.email,
+            subject: `Added to Project: ${name}`,
+            html: `<p>Hi ${user.username},</p><p>You have been added to the project <strong>${name}</strong>.</p><p>Log in to your dashboard to view the project details and collaborate.</p>`
+          });
+        });
       }
 
       return createdProject;

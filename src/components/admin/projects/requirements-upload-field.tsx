@@ -37,7 +37,8 @@ export function RequirementsUploadField({
 
     try {
       // 1. Upload directly to Vercel Blob using the client SDK
-      const newBlob = await upload(fileToUpload.name, fileToUpload, {
+      const uniqueFilename = `${crypto.randomUUID()}-${fileToUpload.name}`;
+      const newBlob = await upload(uniqueFilename, fileToUpload, {
         access: 'public',
         handleUploadUrl: `/api/projects/${projectId}/upload-url`,
       });

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Lock, User, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
-export function SetPasswordForm({ rawToken, email }: { rawToken: string; email: string }) {
+export function SetPasswordForm({ rawToken, email, defaultUsername }: { rawToken: string; email: string, defaultUsername?: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function SetPasswordForm({ rawToken, email }: { rawToken: string; email: 
   } = useForm<AcceptInviteInput>({
     resolver: zodResolver(acceptInviteSchema),
     defaultValues: {
-      username: email.split("@")[0], // Pre-fill with email prefix
+      username: defaultUsername || email.split("@")[0], // Pre-fill with username or email prefix
       password: "",
       confirmPassword: "",
     },
