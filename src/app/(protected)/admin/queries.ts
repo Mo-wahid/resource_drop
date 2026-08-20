@@ -30,9 +30,10 @@ export async function getAdminDashboardStats() {
       },
     }),
     // Provisioned resources count
-    prisma.provisionedResource.count({
+    prisma.resourceRequest.count({
       where: {
         deletedAt: null,
+        status: RequestStatus.PROVISIONED,
       },
     }),
   ]);
