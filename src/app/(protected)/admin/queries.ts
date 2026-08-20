@@ -31,6 +31,10 @@ export async function getAdminDashboardStats() {
           status: {
             notIn: ["COMPLETED", "ARCHIVED"]
           }
+        },
+        user: {
+          accountStatus: "ACTIVE",
+          deletedAt: null
         }
       },
     }),
@@ -39,6 +43,15 @@ export async function getAdminDashboardStats() {
       where: {
         deletedAt: null,
         status: RequestStatus.PROVISIONED,
+        project: {
+          status: {
+            notIn: ["COMPLETED", "ARCHIVED"]
+          }
+        },
+        user: {
+          accountStatus: "ACTIVE",
+          deletedAt: null
+        }
       },
     }),
   ]);
@@ -60,6 +73,10 @@ export async function getRecentPendingRequests(limit: number = 5) {
         status: {
           notIn: ["COMPLETED", "ARCHIVED"]
         }
+      },
+      user: {
+        accountStatus: "ACTIVE",
+        deletedAt: null
       }
     },
     take: limit,
@@ -90,6 +107,10 @@ export async function getAdminRequestStatusBreakdown() {
         status: {
           notIn: ["COMPLETED", "ARCHIVED"]
         }
+      },
+      user: {
+        accountStatus: "ACTIVE",
+        deletedAt: null
       }
     },
     _count: {

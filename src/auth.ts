@@ -76,6 +76,16 @@ const { handlers, signIn, signOut, auth: uncachedAuth } = NextAuth({
     },
     async session({ session, token }) {
       if (token.id && session.user) {
+        // Enforce immediate force-logout if a user is suspended or deleted
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { accountStatus: true, deletedAt: true }
+        });
+
+        if (!dbUser || dbUser.deletedAt || dbUser.accountStatus !== "ACTIVE") {
+          return {} as any; // Invalidates the session immediately
+        }
+
         session.user.id = token.id as string;
         session.user.role = token.role as string;
       }

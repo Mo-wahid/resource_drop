@@ -15,6 +15,10 @@ export async function getAdminRequests(
       status: {
         notIn: ["COMPLETED", "ARCHIVED"]
       }
+    },
+    user: {
+      accountStatus: "ACTIVE",
+      deletedAt: null
     }
   };
 
@@ -73,8 +77,19 @@ export async function getAdminRequests(
 }
 
 export async function getAdminRequestDetail(requestId: string) {
-  const request = await prisma.resourceRequest.findUnique({
-    where: { id: requestId },
+  const request = await prisma.resourceRequest.findFirst({
+    where: { 
+      id: requestId,
+      user: {
+        accountStatus: "ACTIVE",
+        deletedAt: null
+      },
+      project: {
+        status: {
+          notIn: ["COMPLETED", "ARCHIVED"]
+        }
+      }
+    },
     include: {
       project: { select: { id: true, name: true, status: true } },
       user: {
