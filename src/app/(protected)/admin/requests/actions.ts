@@ -7,6 +7,8 @@ import { RequestStatus } from "@prisma/client";
 import { logAuditAction } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { buildRequestStatusEmail } from "@/lib/email/request-email";
+import { encryptJson } from "@/lib/encryption";
+import { provisionGithubSchema, provisionDatabaseSchema, provisionObjectStorageSchema, provisionCustomSchema } from "@/lib/validation/provision";
 
 export async function updateRequestStatus(
   requestId: string,
@@ -200,37 +202,39 @@ export async function provisionRequestAction(
       if ((!details.genericText || typeof details.genericText !== "string" || !details.genericText.trim()) && !data.attachmentUrl) {
         return { error: "Either connection details or an attachment is required" };
       }
+      if (details.genericText) {
+        const parsed = provisionCustomSchema.safeParse(details);
+        if (!parsed.success) return { error: parsed.error.issues[0].message };
+      }
     } else if (resourceTypeName === "github_repo") {
-      if (!details.repositoryUrl || typeof details.repositoryUrl !== "string" || !details.repositoryUrl.trim()) {
-        return { error: "Repository URL is required" };
-      }
+      const parsed = provisionGithubSchema.safeParse(details);
+      if (!parsed.success) return { error: parsed.error.issues[0].message };
     } else if (resourceTypeName === "database") {
-      if (!details.connectionString || typeof details.connectionString !== "string" || !details.connectionString.trim()) {
-        return { error: "Connection String is required" };
-      }
+      const parsed = provisionDatabaseSchema.safeParse(details);
+      if (!parsed.success) return { error: parsed.error.issues[0].message };
     } else if (resourceTypeName === "object_storage") {
-      if (!details.bucketName || typeof details.bucketName !== "string" || !details.bucketName.trim()) {
-        return { error: "Bucket Name is required" };
-      }
-      if (!details.accessKeyId || typeof details.accessKeyId !== "string" || !details.accessKeyId.trim()) {
-        return { error: "Access Key ID is required" };
-      }
-      if (!details.secretAccessKey || typeof details.secretAccessKey !== "string" || !details.secretAccessKey.trim()) {
-        return { error: "Secret Access Key is required" };
-      }
+      const parsed = provisionObjectStorageSchema.safeParse(details);
+      if (!parsed.success) return { error: parsed.error.issues[0].message };
     } else if (resourceTypeName === "api_key") {
       const keys = (request.parameters as any)?.keys;
       if (Array.isArray(keys) && keys.length > 0) {
         for (const k of keys) {
-          if (!details[k] || typeof details[k] !== "string" || !details[k].trim()) {
-            return { error: `Key ${k} is required` };
+          if (!details[k] || typeof details[k] !== "string" || details[k].trim().length < 8) {
+            return { error: `Key ${k} is required and must be at least 8 characters` };
           }
         }
       } else {
-        if (!details.apiKey || typeof details.apiKey !== "string" || !details.apiKey.trim()) {
-          return { error: "API Key is required" };
+        if (!details.apiKey || typeof details.apiKey !== "string" || details.apiKey.trim().length < 8) {
+          return { error: "API Key is required and must be at least 8 characters" };
         }
       }
+    }
+
+    // Encrypt details before saving
+    let connectionDetailsToSave = {};
+    if (Object.keys(details).length > 0) {
+      const encryptedString = encryptJson(details);
+      connectionDetailsToSave = encryptedString ? JSON.parse(encryptedString) : {};
     }
 
     // Perform provision in a transaction
@@ -242,7 +246,7 @@ export async function provisionRequestAction(
           resourceTypeId: request.resourceTypeId,
           requestId: request.id,
           vaultReference: data.vaultReference || null,
-          connectionDetails: data.connectionDetails || {},
+          connectionDetails: connectionDetailsToSave,
         },
       });
 

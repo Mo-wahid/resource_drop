@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { decryptJson } from "@/lib/encryption";
 import { RequestStatus } from "@prisma/client";
 
 export async function getAdminRequests(
@@ -72,7 +73,7 @@ export async function getAdminRequests(
 }
 
 export async function getAdminRequestDetail(requestId: string) {
-  return prisma.resourceRequest.findUnique({
+  const request = await prisma.resourceRequest.findUnique({
     where: { id: requestId },
     include: {
       project: { select: { id: true, name: true, status: true } },
@@ -103,4 +104,10 @@ export async function getAdminRequestDetail(requestId: string) {
       },
     }
   });
+
+  if (request?.provisionedResource?.connectionDetails) {
+    request.provisionedResource.connectionDetails = decryptJson(JSON.stringify(request.provisionedResource.connectionDetails));
+  }
+
+  return request;
 }

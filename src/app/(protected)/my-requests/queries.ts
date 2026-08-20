@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { decryptJson } from "@/lib/encryption";
 
 export async function getResourceTypes() {
   return prisma.resourceType.findMany({
@@ -77,7 +78,7 @@ export async function getMemberRequests(
 }
 
 export async function getMemberRequestDetail(requestId: string, userId: string) {
-  return prisma.resourceRequest.findFirst({
+  const request = await prisma.resourceRequest.findFirst({
     where: { 
       id: requestId,
       userId: userId, // Ensure user owns the request
@@ -114,4 +115,10 @@ export async function getMemberRequestDetail(requestId: string, userId: string) 
       },
     }
   });
+
+  if (request?.provisionedResource?.connectionDetails) {
+    request.provisionedResource.connectionDetails = decryptJson(JSON.stringify(request.provisionedResource.connectionDetails));
+  }
+
+  return request;
 }
