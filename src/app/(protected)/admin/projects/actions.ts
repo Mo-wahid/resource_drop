@@ -8,7 +8,8 @@ import { z } from "zod";
 import { Prisma, Project } from "@prisma/client";
 import { deleteBlob } from "@/lib/storage";
 import { logAuditAction } from "@/lib/audit";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, buildGenericEmail } from "@/lib/email";
+import { getAppUrl } from "@/lib/utils";
 
 type ProjectStatus = Project["status"];
 
@@ -90,7 +91,11 @@ export async function createProject(data: CreateProjectInput) {
           sendEmail({
             to: user.email,
             subject: `Added to Project: ${name}`,
-            html: `<p>Hi ${user.username},</p><p>You have been added to the project <strong>${name}</strong>.</p><p>Log in to your dashboard to view the project details and collaborate.</p>`
+            html: buildGenericEmail(
+              `<p style="margin:0 0 16px;color:#09090b;font-size:15px;line-height:1.6;">Hi <strong>${user.username}</strong>,</p>
+               <p style="margin:0 0 24px;color:#3f3f46;font-size:14px;line-height:1.6;">You have been added to the project <strong>${name}</strong>.</p>`,
+              { text: "View Project", url: `${getAppUrl()}/projects/${createdProject.id}` }
+            )
           });
         });
       }
@@ -263,7 +268,11 @@ export async function syncProjectMembers(projectId: string, userIds: string[]) {
         sendEmail({
           to: user.email,
           subject: `Added to Project: ${project.name}`,
-          html: `<p>Hi ${user.username},</p><p>You have been added to the project <strong>${project.name}</strong>.</p><p>Log in to your dashboard to view the project details and collaborate.</p>`
+          html: buildGenericEmail(
+            `<p style="margin:0 0 16px;color:#09090b;font-size:15px;line-height:1.6;">Hi <strong>${user.username}</strong>,</p>
+             <p style="margin:0 0 24px;color:#3f3f46;font-size:14px;line-height:1.6;">You have been added to the project <strong>${project.name}</strong>.</p>`,
+            { text: "View Project", url: `${getAppUrl()}/projects/${projectId}` }
+          )
         });
       });
     }
