@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { provisionRequestAction } from "@/app/(protected)/admin/requests/actions";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { RequirementsUploadField } from "@/components/admin/projects/requirements-upload-field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { provisionGithubSchema, provisionDatabaseSchema, provisionObjectStorageSchema, provisionCustomSchema } from "@/lib/validation/provision";
 
 export function ProvisionResourceForm({ request }: { request: any }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,19 +51,48 @@ export function ProvisionResourceForm({ request }: { request: any }) {
 
   // Validation logic
   let isValid = false;
+  let validationError: string | null = null;
+
   if (isCustom) {
     isValid = !!(formData.genericText?.trim() || attachment);
+    if (isValid && formData.genericText?.trim()) {
+      const res = provisionCustomSchema.safeParse(formData);
+      if (!res.success) validationError = res.error.issues[0].message;
+    }
   } else if (resourceType === "github_repo") {
     isValid = !!formData.repositoryUrl?.trim();
+    if (isValid) {
+      const res = provisionGithubSchema.safeParse(formData);
+      if (!res.success) validationError = res.error.issues[0].message;
+    }
   } else if (resourceType === "database") {
     isValid = !!formData.connectionString?.trim();
+    if (isValid) {
+      const res = provisionDatabaseSchema.safeParse(formData);
+      if (!res.success) validationError = res.error.issues[0].message;
+    }
   } else if (resourceType === "object_storage") {
     isValid = !!(formData.bucketName?.trim() && formData.accessKeyId?.trim() && formData.secretAccessKey?.trim());
+    if (isValid) {
+      const res = provisionObjectStorageSchema.safeParse(formData);
+      if (!res.success) validationError = res.error.issues[0].message;
+    }
   } else if (resourceType === "api_key") {
     if (request.parameters?.keys && Array.isArray(request.parameters.keys) && request.parameters.keys.length > 0) {
       isValid = request.parameters.keys.every((k: string) => !!formData[k]?.trim());
+      if (isValid) {
+        for (const k of request.parameters.keys) {
+          if (formData[k].trim().length < 8) {
+            validationError = `Key ${k} must be at least 8 characters`;
+            break;
+          }
+        }
+      }
     } else {
       isValid = !!formData.apiKey?.trim();
+      if (isValid && formData.apiKey.trim().length < 8) {
+        validationError = "API Key must be at least 8 characters";
+      }
     }
   }
 
@@ -191,7 +222,13 @@ export function ProvisionResourceForm({ request }: { request: any }) {
           )}
 
           <div className="pt-2">
-            <Button type="submit" disabled={isSubmitting || !isValid} className="w-full">
+            {validationError && isValid && (
+              <Alert variant="destructive" className="mb-4 py-2 px-3">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs ml-1">{validationError}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" disabled={isSubmitting || !isValid || !!validationError} className="w-full">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Complete Provisioning
             </Button>
