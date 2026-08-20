@@ -104,7 +104,14 @@ export const getRoles = unstable_cache(
 
 export async function getProjectRequests(projectId: string) {
   return prisma.resourceRequest.findMany({
-    where: { projectId, deletedAt: null },
+    where: { 
+      projectId, 
+      deletedAt: null,
+      user: {
+        accountStatus: "ACTIVE",
+        deletedAt: null
+      }
+    },
     include: {
       user: { select: { username: true, email: true } },
       resourceType: { select: { name: true } },
