@@ -41,6 +41,9 @@ export function AuditLogTable({
     if (action.includes("CREATE") || action.includes("ADD") || action.includes("PROVISION")) {
       return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
     }
+    if (action.includes("CRON")) {
+      return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+    }
     if (action.includes("DELETE") || action.includes("REMOVE") || action.includes("REJECT") || action.includes("REVOKE")) {
       return "bg-rose-500/10 text-rose-500 border-rose-500/20";
     }
@@ -99,6 +102,10 @@ export function AuditLogTable({
           return <span>Failed login attempt for <span className="font-medium text-foreground">{details?.email || "unknown"}</span></span>;
         case "AUTH_LOGOUT":
           return <span>Logged out</span>;
+        case "CRON_PENDING_REQUESTS":
+          return <span>Digest: <span className="font-medium text-foreground">{details.message}</span></span>;
+        case "CRON_PENDING_REQUESTS_FAILED":
+          return <span>Digest Failed: <span className="font-medium text-destructive">{details.error}</span></span>;
         default:
           if (action.startsWith("REQUEST_STATUS_")) {
              return <span>Status changed from <span className="font-medium text-foreground">{details.previousStatus}</span></span>;

@@ -30,6 +30,9 @@ export function RecentActivityList({ entries }: { entries: AuditEntry[] }) {
     if (action.includes("CREATE") || action.includes("ADD") || action.includes("PROVISION")) {
       return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
     }
+    if (action.includes("CRON")) {
+      return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+    }
     if (action.includes("DELETE") || action.includes("REMOVE") || action.includes("REJECT") || action.includes("REVOKE")) {
       return "bg-rose-500/10 text-rose-500 border-rose-500/20";
     }
@@ -89,7 +92,7 @@ export function RecentActivityList({ entries }: { entries: AuditEntry[] }) {
                         </div>
                         {entry.details && typeof entry.details === "object" && (
                           <span className="text-[11px] text-muted-foreground truncate max-w-[280px]">
-                            {JSON.stringify(entry.details).replace(/["{}]/g, "")}
+                            {entry.details.message || entry.details.error || JSON.stringify(entry.details).replace(/["{}]/g, "")}
                           </span>
                         )}
                       </div>
