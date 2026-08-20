@@ -6,6 +6,7 @@ import { requestFormSchema, type RequestFormInput } from "@/lib/validation/reque
 import { revalidatePath } from "next/cache";
 import { logAuditAction } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
+import { buildNewRequestEmail } from "@/lib/email/request-email";
 
 export async function createResourceRequest(data: RequestFormInput) {
   const authResult = await requireAuthAction();
@@ -104,10 +105,18 @@ export async function createResourceRequest(data: RequestFormInput) {
 
     // Send emails async
     result.admins.forEach(admin => {
+      const { subject, html } = buildNewRequestEmail({
+        adminName: admin.username || admin.email?.split('@')[0] || "Admin",
+        requesterName: result.username,
+        projectName: result.projectName,
+        resourceTypeName: resourceType.name,
+        requestId: result.req.id,
+      });
+
       sendEmail({
         to: admin.email,
-        subject: `New Resource Request for ${result.projectName}`,
-        html: `<p><strong>${result.username}</strong> has submitted a new resource request for the project <strong>${result.projectName}</strong>.</p><p>Please log in to the admin dashboard to review.</p>`
+        subject,
+        html
       });
     });
 

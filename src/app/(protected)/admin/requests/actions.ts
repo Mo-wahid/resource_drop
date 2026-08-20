@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { RequestStatus } from "@prisma/client";
 import { logAuditAction } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
+import { buildRequestStatusEmail } from "@/lib/email/request-email";
 
 export async function updateRequestStatus(
   requestId: string,
@@ -71,10 +72,18 @@ export async function updateRequestStatus(
 
     await logAuditAction(authResult.session.user.id, `REQUEST_STATUS_${newStatus}`, requestId, { previousStatus: request.status, notes });
     
+    const { subject, html } = buildRequestStatusEmail({
+      userName: request.user.username,
+      projectName: request.project.name,
+      newStatus,
+      notes: notes?.trim(),
+      requestId,
+    });
+
     sendEmail({
       to: request.user.email,
-      subject: `Resource Request Status Update - ${newStatus}`,
-      html: `<p>Hi ${request.user.username},</p><p>The status of your resource request for <strong>${request.project.name}</strong> has been updated to <strong>${newStatus}</strong>.</p><p>Notes: ${notes || "None"}</p><p>Please log in to your dashboard to see more details.</p>`
+      subject,
+      html
     });
 
     return { success: true };
@@ -232,10 +241,17 @@ export async function provisionRequestAction(
     
     await logAuditAction(authResult.session.user.id, "REQUEST_PROVISION", requestId, { vaultReference: data.vaultReference });
 
+    const { subject, html } = buildRequestStatusEmail({
+      userName: request.user.username,
+      projectName: request.project.name,
+      newStatus: "PROVISIONED",
+      requestId,
+    });
+
     sendEmail({
       to: request.user.email,
-      subject: `Resource Provisioned - ${request.project.name}`,
-      html: `<p>Hi ${request.user.username},</p><p>Your resource request for <strong>${request.project.name}</strong> has been successfully provisioned!</p><p>Please log in to your dashboard to access the connection details.</p>`
+      subject,
+      html
     });
 
     return { success: true };
