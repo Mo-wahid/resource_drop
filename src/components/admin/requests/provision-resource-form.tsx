@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { provisionRequestAction } from "@/app/(protected)/admin/requests/actions";
 import { Loader2, AlertCircle } from "lucide-react";
 import { RequirementsUploadField } from "@/components/admin/projects/requirements-upload-field";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { provisionGithubSchema, provisionDatabaseSchema, provisionObjectStorageSchema, provisionCustomSchema } from "@/lib/validation/provision";
 
 export function ProvisionResourceForm({ request }: { request: any }) {
@@ -223,10 +222,10 @@ export function ProvisionResourceForm({ request }: { request: any }) {
 
           <div className="pt-2">
             {validationError && isValid && (
-              <Alert variant="destructive" className="mb-4 py-2 px-3">
+              <div className="mb-4 flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs ml-1">{validationError}</AlertDescription>
-              </Alert>
+                <span className="text-xs font-medium">{validationError}</span>
+              </div>
             )}
             <Button type="submit" disabled={isSubmitting || !isValid || !!validationError} className="w-full">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

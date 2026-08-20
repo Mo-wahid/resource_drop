@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
 export async function requireAuth() {
@@ -26,11 +27,11 @@ export async function requireRole(role: string) {
   return result;
 }
 
-export async function requireAuthAction() {
+export async function requireAuthAction(): Promise<{ session: any; error?: string }> {
   const session = await auth();
   
   if (!session?.user) {
-    return { error: "Unauthorized" };
+    redirect("/login");
   }
 
   return { session };
