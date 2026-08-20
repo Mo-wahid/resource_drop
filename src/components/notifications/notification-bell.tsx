@@ -24,6 +24,8 @@ export function NotificationBell({ session }: { session: Session | null }) {
 
   const role = session?.user?.role;
 
+  const [showAll, setShowAll] = useState(false);
+
   const fetchUnreadCount = useCallback(async () => {
     if (!session) return;
     try {
@@ -50,20 +52,13 @@ export function NotificationBell({ session }: { session: Session | null }) {
   useEffect(() => {
     // Initial fetch
     fetchUnreadCount();
-
-    // Polling disabled for now
-    /*
-    const interval = setInterval(() => {
-      fetchUnreadCount();
-    }, 30000);
-
-    return () => clearInterval(interval);
-    */
   }, [fetchUnreadCount]);
 
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
+    } else {
+      setShowAll(false);
     }
   }, [isOpen]);
 
@@ -115,7 +110,7 @@ export function NotificationBell({ session }: { session: Session | null }) {
             </div>
           ) : notifications.length > 0 ? (
             <div className="flex flex-col">
-              {notifications.map((notification) => (
+              {(showAll ? notifications : notifications.slice(0, 5)).map((notification) => (
                 <NotificationItem 
                   key={notification.id} 
                   notification={notification} 
@@ -124,6 +119,14 @@ export function NotificationBell({ session }: { session: Session | null }) {
                   onClose={() => setIsOpen(false)}
                 />
               ))}
+              {!showAll && notifications.length > 5 && (
+                <button
+                  onClick={() => setShowAll(true)}
+                  className="py-3 text-xs font-medium text-center text-primary hover:bg-muted/50 transition-colors border-t border-border"
+                >
+                  View more
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
