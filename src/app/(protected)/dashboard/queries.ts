@@ -36,6 +36,11 @@ export async function getMemberDashboardStats(userId: string) {
         userId,
         deletedAt: null,
         status: RequestStatus.PROVISIONED,
+        project: {
+          status: {
+            notIn: ["COMPLETED", "ARCHIVED"]
+          }
+        }
       },
     }),
   ]);
@@ -79,6 +84,11 @@ export async function getMemberRequestStatusBreakdown(userId: string) {
     where: {
       userId,
       deletedAt: null,
+      project: {
+        status: {
+          notIn: ["COMPLETED", "ARCHIVED"]
+        }
+      }
     },
     _count: {
       status: true,

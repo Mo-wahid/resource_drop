@@ -86,7 +86,7 @@ export function TablePagination({ currentPage, totalPages, totalCount }: TablePa
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+    <div className="flex items-center justify-between px-4 py-2 border-t border-border bg-muted/10">
       <div className="text-xs text-muted-foreground">
         Showing total of <span className="font-medium text-foreground">{totalCount}</span> items
       </div>
